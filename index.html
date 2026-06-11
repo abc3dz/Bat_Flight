@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title>Bat Flight</title>
+    <style>
+      body { margin: 0; background: black; }
+      canvas { display: block; margin: auto; }
+      #start-screen {
+        position: fixed;
+        width: 100%; height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: black;
+        z-index: 999;
+      }
+      #start-btn {
+        font-size: 32px;
+        padding: 20px 48px;
+        cursor: pointer;
+        background: #4af;
+        border: none;
+        border-radius: 12px;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="start-screen">
+      <button id="start-btn">▶ Start Game</button>
+    </div>
+
+    <script type="module">
+      import init from './bat_flight.js';
+
+      document.getElementById('start-btn').addEventListener('click', async () => {
+        document.getElementById('start-screen').style.display = 'none';
+        await init();
+      });
+    </script>
+  </body>
+</html>
