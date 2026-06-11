@@ -37,7 +37,7 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
-                title: "Flappy Bird 3D".into(),
+                title: "Bat Flight".into(),
                 fit_canvas_to_parent: true,
                 mode: WindowMode::BorderlessFullscreen(
                     MonitorSelection::Primary,
