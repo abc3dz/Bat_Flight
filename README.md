@@ -1,2 +1,12 @@
 # Bat_Flight
-A Simple game made by bevy game engine
+A Simple game made by Bevy Game Engine
+
+<img scr="https://github.com/abc3dz/Bat_Flight/blob/main/ss/BatFlight_ss1.gif" height="300" width="300">
+
+## Third Party Assets
+
+This project uses code from bevy_wind_waker_shader by Jan Hohenheim.
+
+Source: https://github.com/janhohenheim/bevy_wind_waker_shader
+
+Licensed under MIT OR Apache-2.0.
