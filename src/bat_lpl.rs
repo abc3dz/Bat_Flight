@@ -40,10 +40,8 @@ fn spawn_bat
     ) {
         let clip = asset_server.load("models/batlowpoly.glb#Animation0");
         let mut graph = AnimationGraph::new();
-        let index = graph.add_clip(clip, 1.0, graph.root); // คืนค่า NodeIndex
-
+        let index = graph.add_clip(clip, 1.0, graph.root);
         let graph_handle = graphs.add(graph);
-
         commands.insert_resource(AnimationToPlay {
             graph: graph_handle,
             index,

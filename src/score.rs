@@ -1,10 +1,15 @@
 use bevy::prelude::*;
-use crate::pillar_lpl::Pillar;
+
 use crate::bat_lpl::Bat;
+use crate::coin_lpl::Coin;
+use crate::gear_lpl::Gear;
 use crate::GameState;
+use crate::LevelState;
 
 #[derive(Resource, Default)]
-pub struct Score(pub f32);
+pub struct Score {
+    pub value: u32,
+}
 
 #[derive(Component)]
 pub struct ScoreText;
@@ -16,43 +21,78 @@ impl Plugin for ScorePlugin {
         app
             .init_resource::<Score>()
             .add_systems(OnEnter(GameState::Playing), setup_score_ui)
-            .add_systems(OnExit(GameState::Playing), cleanup_score_ui)
-            .add_systems(Update, (
-                check_score, update_score_ui
-            ).chain().run_if(in_state(GameState::Playing)));
+            //.add_systems(OnExit(GameState::Playing), cleanup_score_ui)
+            .add_systems(Update,check_level_progress.run_if(in_state(GameState::Playing)),)
+            .add_systems(Update, (check_score, update_score_ui).chain().run_if(in_state(GameState::Playing)));
     }
 }
 
-fn setup_score_ui(mut commands: Commands) {
+fn setup_score_ui(mut commands: Commands, score: Res<Score>, asset_server: Res<AssetServer>) {
     commands.spawn((
-        Text::new("0"),
-        TextFont { font_size: 64.0, ..default() },
-        TextColor(Color::WHITE),
         Node {
             position_type: PositionType::Absolute,
-            top:  Val::Px(20.0),
-            left: Val::Percent(48.0),
+            top: px(10.0),
+            left: px(10.0),
+            align_items: AlignItems::Center,
             ..default()
         },
-        ScoreText,
-    ));
+    )).with_children(|parent| {
+
+        parent.spawn((
+            ImageNode::new(
+                asset_server.load("images/coin.png")
+            ),
+            Node {
+                width: px(50.0),
+                height: px(50.0),
+                ..default()
+            },
+        ));
+
+        parent.spawn((
+            Text::new(score.value.to_string()),
+            ScoreText,
+        ));
+    });
 }
 
 fn check_score(
     bat_query: Query<&Transform, With<Bat>>,
-    mut pillar_query: Query<(&Transform, &mut Pillar)>,
+    coin_query: Query<(Entity, &Transform), With<Coin>>,
+    gear_query: Query<(Entity, &Transform), With<Gear>>,
     mut score: ResMut<Score>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) {
     let Ok(bat_t) = bat_query.single() else { return };
-    for (pillar_t, mut pillar) in &mut pillar_query {
-        if !pillar.scored && pillar_t.translation.x < bat_t.translation.x {
-            pillar.scored = true;
-            score.0 += 0.5;
+
+    for (entity, coin_transform) in &coin_query {
+        let distance = bat_t
+            .translation
+            .distance(coin_transform.translation);
+
+        if distance < 1.0 {
+            score.value += 5;
+            commands.entity(entity).despawn();
             commands.spawn(AudioPlayer::new(
                 asset_server.load("sounds/score.ogg"),
             ));
+            //println!("Coin collected!");
+        }
+
+    for (entity, coin_transform) in &gear_query {
+        let distance = bat_t
+            .translation
+            .distance(coin_transform.translation);
+
+        if distance < 1.0 {
+            score.value -= 1;
+            commands.entity(entity).despawn();
+            // commands.spawn(AudioPlayer::new(
+            //     asset_server.load("sounds/score.ogg"),
+            // ));
+
+            }
         }
     }
 }
@@ -63,12 +103,23 @@ fn update_score_ui(
 ) {
     if !score.is_changed() { return; }
     for mut text in &mut query {
-        **text = score.0.to_string();
+        **text = score.value.to_string();
     }
 }
 
-fn cleanup_score_ui(mut commands: Commands, query: Query<Entity, With<ScoreText>>) {
-    for entity in &query {
-        commands.entity(entity).despawn();
+fn check_level_progress(
+    score: Res<Score>,
+    level_state: Res<State<LevelState>>,
+    mut next_level: ResMut<NextState<LevelState>>,
+) {
+    if *level_state.get() == LevelState::Level1
+        && score.value >= 10
+    {
+        next_level.set(LevelState::Level2);
+    }
+    if *level_state.get() == LevelState::Level2
+        && score.value >= 20
+    {
+        next_level.set(LevelState::Level3);
     }
 }

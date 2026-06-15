@@ -1,18 +1,22 @@
 use bevy::prelude::*;
 use rand::Rng;
 use bevy_wind_waker_shader::prelude::*;
+use crate::bat_lpl::Bat;
 use crate::GameState;
+use crate::LevelState;
 
-const PILLAR_SPEED:      f32 = 4.0;   // ความเร็วท่อ
-const PILLAR_SPAWN_X:    f32 = 10.0;  // ตำแหน่ง spawn ด้านขวา
-const PILLAR_DESPAWN_X:  f32 = -10.0; // ลบท่อเมื่อออกนอกจอซ้าย
-const PILLAR_SPAWN_SECS: f32 = 2.0;   // spawn ทุกกี่วินาที
-const GAP_HALF:        f32 = 1.8;   // ครึ่งช่องว่างระหว่างท่อบน/ล่าง
+const PILLAR_SPEED:      f32 = 4.0;
+const PILLAR_SPAWN_X:    f32 = 10.0;
+const PILLAR_DESPAWN_X:  f32 = -10.0;
+const PILLAR_SPAWN_SECS: f32 = 2.0;
+const GAP_HALF:          f32 = 1.8;
+
+const BIRD_RADIUS:f32 = 0.4;
+const PIPE_HALF_W:f32 = 0.5;
+const PIPE_HALF_H:f32 = 2.0;
 
 #[derive(Component)]
-pub struct Pillar{
-    pub scored: bool,
-}
+pub struct Pillar;
 
 #[derive(Resource)]
 struct PillarSpawnTimer(Timer);
@@ -27,10 +31,21 @@ impl Plugin for PillarPlugin {
                 TimerMode::Repeating,
             )))
             .add_systems(Update, (
-                spawn_pillars,
-                move_pillars,
-                despawn_pillars,
-            ).chain().run_if(in_state(GameState::Playing)));
+                check_collision, 
+                ).run_if(in_state(GameState::Playing)))
+            .add_systems( Update,(
+                    spawn_pillars,
+                    move_pillars,
+                    despawn_pillars,)
+                .chain()
+                .run_if(in_state(GameState::Playing))
+                .run_if(pillar_levels))
+            .add_systems(
+                OnEnter(LevelState::Level2),
+                cleanup_pillars,
+            )
+            .add_systems(Update, draw_hitbox.run_if(in_state(GameState::GameOver)));
+            
     }
 }
 
@@ -44,9 +59,8 @@ fn spawn_pillars(
     if !timer.0.just_finished() { return; }
 
     let mut rng = rand::rng();
-    let gap_center: f32 = rng.random_range(-2.0..=2.0); // สุ่มตำแหน่งช่อง
+    let gap_center: f32 = rng.random_range(-2.0..=2.0);
 
-    // ท่อล่าง
     commands.spawn((
         SceneRoot(asset_server.load("models/pillarlowpoly.glb#Scene0")),
         Transform::from_xyz(PILLAR_SPAWN_X, gap_center - GAP_HALF - 2.5, 0.0),
@@ -54,26 +68,11 @@ fn spawn_pillars(
             .time_of_day(TimeOfDay::Day)
             .weather(Weather::Sunny)
             .build(),
-        Outline::default(),
         GlobalTransform::default(),
-        Pillar { scored: false },
-    ));
-
-    // ท่อบน (หมุน 180° ให้หันหัวลง)
-    commands.spawn((
-        SceneRoot(asset_server.load("models/pillarlowpoly.glb#Scene0")),
-        Transform::from_xyz(PILLAR_SPAWN_X, gap_center + GAP_HALF + 2.5, 0.0)
-            .with_rotation(Quat::from_rotation_z(std::f32::consts::PI)),
-        WindWakerShaderBuilder::default()
-            .time_of_day(TimeOfDay::Day)
-            .weather(Weather::Sunny)
-            .build(),
-        GlobalTransform::default(),
-        Pillar { scored: false },
+        Pillar,
     ));
 }
 
-// ── เลื่อนท่อเข้าหานกทุก frame ──────────────────────────────────
 fn move_pillars(
     time: Res<Time>,
     mut query: Query<&mut Transform, With<Pillar>>,
@@ -83,7 +82,60 @@ fn move_pillars(
     }
 }
 
-// ── ลบท่อที่ออกนอกจอ ─────────────────────────────────────────────
+fn check_collision(
+    bat_query: Query<&Transform, With<Bat>>,
+    pillar_query: Query<&Transform, With<Pillar>>,
+    mut next: ResMut<NextState<GameState>>, 
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+) {
+    let Ok(bat_t) = bat_query.single() else { return };
+    let bp = bat_t.translation;
+
+    for pillar_t in &pillar_query {
+        let pp = pillar_t.translation;
+
+        let closest = Vec3::new(
+            bp.x.clamp(pp.x - PIPE_HALF_W, pp.x + PIPE_HALF_W),
+            bp.y.clamp(pp.y - PIPE_HALF_H, pp.y + PIPE_HALF_H),
+            bp.z,
+        );
+
+        let dist = (bp - closest).length();
+        if dist < BIRD_RADIUS {         
+            next.set(GameState::GameOver);
+            commands.spawn(AudioPlayer::new(
+                asset_server.load("sounds/game_over.ogg"),
+            ));
+        }
+    }
+}
+
+fn draw_hitbox(
+    mut gizmos: Gizmos,
+    bat_query: Query<&Transform, With<Bat>>,
+    pillar_query: Query<&Transform, With<Pillar>>,
+) {
+    if let Ok(bat_t) = bat_query.single() {
+        gizmos.sphere(
+            Isometry3d::from_translation(bat_t.translation),
+            BIRD_RADIUS,
+            Color::srgb(0.0, 1.0, 0.0), // สีเขียว
+        );
+    }
+    
+    for pillar_t in &pillar_query {
+        gizmos.cube(
+            Transform {
+                translation: pillar_t.translation,
+                scale: Vec3::new(PIPE_HALF_W * 2.0, PIPE_HALF_H * 2.0, 1.0),
+                ..default()
+            },
+            Color::srgb(1.0, 0.0, 0.0), // สีแดง
+        );
+    }
+}
+
 fn despawn_pillars(
     mut commands: Commands,
     query: Query<(Entity, &Transform), With<Pillar>>,
@@ -93,4 +145,22 @@ fn despawn_pillars(
             commands.entity(entity).despawn();
         }
     }
+}
+
+fn cleanup_pillars(
+    mut commands: Commands,
+    query: Query<Entity, With<Pillar>>,
+) {
+    for entity in &query {
+        commands.entity(entity).despawn();
+    }
+}
+
+fn pillar_levels(
+    level_state: Res<State<LevelState>>,
+) -> bool {
+    matches!(
+        level_state.get(),
+        LevelState::Level2 | LevelState::Level3
+    )
 }
