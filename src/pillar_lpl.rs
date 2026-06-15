@@ -4,6 +4,8 @@ use bevy_wind_waker_shader::prelude::*;
 use crate::bat_lpl::Bat;
 use crate::GameState;
 use crate::LevelState;
+use crate::heart_lpl::Heart;
+use crate::score::Score;
 
 const PILLAR_SPEED:      f32 = 4.0;
 const PILLAR_SPAWN_X:    f32 = 10.0;
@@ -85,9 +87,11 @@ fn move_pillars(
 fn check_collision(
     bat_query: Query<&Transform, With<Bat>>,
     pillar_query: Query<&Transform, With<Pillar>>,
-    mut next: ResMut<NextState<GameState>>, 
+    heart_query: Query<Entity, With<Heart>>,
+    mut score: ResMut<Score>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
+    mut next: ResMut<NextState<GameState>>,
 ) {
     let Ok(bat_t) = bat_query.single() else { return };
     let bp = bat_t.translation;
@@ -103,7 +107,16 @@ fn check_collision(
 
         let dist = (bp - closest).length();
         if dist < BIRD_RADIUS {         
-            next.set(GameState::GameOver);
+            
+            if score.heart <= 0{
+                next.set(GameState::GameOver);
+            }else {
+                score.heart -= 1;
+                if let Some(heart_entity) = heart_query.iter().next() {
+                    commands.entity(heart_entity).despawn();
+                }
+            }
+            
             commands.spawn(AudioPlayer::new(
                 asset_server.load("sounds/game_over.ogg"),
             ));
