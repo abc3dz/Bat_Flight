@@ -28,7 +28,7 @@ impl Plugin for ScorePlugin {
 }
 
 fn setup_score_ui(mut commands: Commands, score: Res<Score>, asset_server: Res<AssetServer>) {
-    commands.spawn((
+     commands.spawn((
         Node {
             position_type: PositionType::Absolute,
             top: px(10.0),
@@ -37,22 +37,50 @@ fn setup_score_ui(mut commands: Commands, score: Res<Score>, asset_server: Res<A
             ..default()
         },
     )).with_children(|parent| {
+        for _ in 0..3 {
+            parent.spawn((
+                ImageNode::new(
+                    asset_server.load("images/heart.png")
+                ),
+                Node {
+                    width: px(50.0),
+                    height: px(50.0),
+                    ..default()
+                }
+            ));
+        }
+    });
+    
+    commands.spawn((
+        Node {
+            width: Val::Percent(100.0),
+            justify_content: JustifyContent::Center,  // จัดกลางแนวนอน
+            padding: UiRect::top(px(10.0)),
+            ..default()
+        },
+    )).with_children(|parent| {
 
         parent.spawn((
-            ImageNode::new(
-                asset_server.load("images/coin.png")
-            ),
             Node {
-                width: px(50.0),
-                height: px(50.0),
+                align_items: AlignItems::Center,
                 ..default()
             },
-        ));
+        )).with_children(|parent| {
 
-        parent.spawn((
-            Text::new(score.value.to_string()),
-            ScoreText,
-        ));
+            parent.spawn((
+                ImageNode::new(asset_server.load("images/coin.png")),
+                Node {
+                    width: px(50.0),
+                    height: px(50.0),
+                    ..default()
+                },
+            ));
+
+            parent.spawn((
+                Text::new(score.value.to_string()),
+                ScoreText,
+            ));
+        });
     });
 }
 
