@@ -3,6 +3,8 @@ use bevy_wind_waker_shader::prelude::*;
 use rand::Rng;
 
 use crate::GameState;
+use crate::bat_lpl::Bat;
+use crate::score::Score;
 
 const COIN_SPAWN_X: f32 = 10.0;
 const COIN_SPAWN_SECS: f32 = 2.0;
@@ -28,6 +30,7 @@ impl Plugin for CoinPlugin {
                 Update,
                 (
                     spawn_coin,
+                    check_collision,
                     move_coins,
                     rotate_coins,
                     despawn_coins,
@@ -88,6 +91,33 @@ fn despawn_coins(
     for (entity, transform) in &query {
         if transform.translation.x < COIN_DESPAWN_X {
             commands.entity(entity).despawn();
+        }
+    }
+}
+fn check_collision(
+    bat_query: Query<&Transform, With<Bat>>,
+    coin_query: Query<(Entity, &Transform), With<Coin>>,
+    mut score: ResMut<Score>,
+    mut commands: Commands,
+    asset_server: Res<AssetServer>
+) {
+    let Ok(bat_t) = bat_query.single() else { return };
+
+    for (entity, coin_transform) in &coin_query {
+        let distance = bat_t
+            .translation
+            .distance(coin_transform.translation);
+
+        if distance < 1.0 {
+            if coin_transform.translation.y < -1.0 {
+                score.value += 5;
+            }else{
+                score.value += 5;
+            }
+            commands.entity(entity).despawn();
+            commands.spawn(AudioPlayer::new(
+                asset_server.load("sounds/score.ogg"),
+            ));
         }
     }
 }

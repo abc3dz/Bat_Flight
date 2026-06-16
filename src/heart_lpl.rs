@@ -4,6 +4,7 @@ use rand::Rng;
 
 use crate::{GameState, LevelState};
 use crate::score::Score;
+use crate::bat_lpl::Bat;
 
 const HEART_SPAWN_X: f32 = 10.0;
 const HEART_SPAWN_SECS: f32 = 2.0;
@@ -12,6 +13,12 @@ const HEART_DESPAWN_X: f32 = -10.0;
 
 #[derive(Component)]
 pub struct Heart;
+
+#[derive(Component)]
+struct HeartsContainer;
+
+#[derive(Component)]
+pub struct HeartsUi;
 
 #[derive(Resource)]
 struct HeartSpawnTimer(Timer);
@@ -29,6 +36,7 @@ impl Plugin for HeartPlugin {
                 Update,
                 (
                     spawn_heart,
+                    check_collision,
                     move_hearts,
                     rotate_hearts,
                     despawn_hearts,
@@ -51,9 +59,6 @@ fn spawn_heart(
     if !timer.0.just_finished() {
         return;
     }
-    if score.heart>=5 {
-        return;
-    }
 
     let mut rng = rand::rng();
 
@@ -69,7 +74,34 @@ fn spawn_heart(
             .weather(Weather::Sunny)
             .build(),
     ));
-    //println!("Spawned a heart at y={y}");
+
+    if score.heart>=5 {
+        return;
+    }
+    commands.spawn((
+        HeartsContainer,
+        Node {
+            position_type: PositionType::Absolute,
+            top: px(10.0),
+            left: px(10.0),
+            align_items: AlignItems::Center,
+            ..default()
+        },
+    )).with_children(|parent| {
+        for _ in 0..score.heart {
+            parent.spawn((
+                HeartsUi,
+                ImageNode::new(
+                    asset_server.load("images/heart.png")
+                ),
+                Node {
+                    width: px(50.0),
+                    height: px(50.0),
+                    ..default()
+                }
+            ));
+        }
+    });
 }
 
 fn move_hearts(
@@ -105,4 +137,38 @@ fn heart_levels(
         level_state.get(),
         LevelState::Level2 | LevelState::Level3
     )
+}
+fn check_collision(
+    mut commands: Commands,
+    bat_query: Query<&Transform, With<Bat>>,
+    heart_query_trans: Query<(Entity, &Transform), With<Heart>>,
+    container_query: Query<Entity, With<HeartsContainer>>,
+    asset_server: Res<AssetServer>,
+    mut score: ResMut<Score>,
+){
+    let Ok(bat_t) = bat_query.single() else { return };
+    for (entity, heart_trans) in &heart_query_trans {
+        let distance = bat_t
+            .translation
+            .distance(heart_trans.translation);
+
+        if distance < 1.0 {
+            score.heart += 1;
+            commands.entity(entity).despawn();
+
+            if let Ok(container) = container_query.single() {
+                commands.entity(container).with_children(|parent| {
+                    parent.spawn((
+                        HeartsUi,
+                        ImageNode::new(asset_server.load("images/heart.png")),
+                        Node {
+                            width: px(50.0),
+                            height: px(50.0),
+                            ..default()
+                        }
+                    ));
+                });
+            }
+        }
+    }
 }
