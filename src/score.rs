@@ -23,6 +23,8 @@ impl Default for Score {
 
 #[derive(Component)]
 struct HeartsContainer;
+#[derive(Component)]
+struct HeartsUi;
 
 #[derive(Component)]
 pub struct ScoreText;
@@ -53,7 +55,7 @@ fn setup_score_ui(mut commands: Commands, score: Res<Score>, asset_server: Res<A
     )).with_children(|parent| {
         for _ in 0..score.heart {
             parent.spawn((
-                Heart,
+                HeartsUi,
                 ImageNode::new(
                     asset_server.load("images/heart.png")
                 ),
@@ -103,7 +105,7 @@ fn check_score(
     bat_query: Query<&Transform, With<Bat>>,
     coin_query: Query<(Entity, &Transform), With<Coin>>,
     gear_query: Query<(Entity, &Transform), With<Gear>>,
-    heart_query: Query<Entity, With<Heart>>,
+    heart_query: Query<Entity, With<HeartsUi>>,
     heart_query_trans: Query<(Entity, &Transform), With<Heart>>,
     container_query: Query<Entity, With<HeartsContainer>>,
     mut score: ResMut<Score>,
@@ -122,7 +124,7 @@ fn check_score(
             if coin_transform.translation.y < -1.0 {
                 score.value += 5;
             }else{
-                score.value += 1;
+                score.value += 5;
             }
             commands.entity(entity).despawn();
             commands.spawn(AudioPlayer::new(
@@ -164,7 +166,7 @@ fn check_score(
             if let Ok(container) = container_query.single() {
                 commands.entity(container).with_children(|parent| {
                     parent.spawn((
-                        HeartsContainer,
+                        HeartsUi,
                         ImageNode::new(asset_server.load("images/heart.png")),
                         Node {
                             width: px(50.0),
