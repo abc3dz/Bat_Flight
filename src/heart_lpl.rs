@@ -3,6 +3,7 @@ use bevy_wind_waker_shader::prelude::*;
 use rand::Rng;
 
 use crate::{GameState, LevelState};
+use crate::score::Score;
 
 const HEART_SPAWN_X: f32 = 10.0;
 const HEART_SPAWN_SECS: f32 = 2.0;
@@ -43,10 +44,14 @@ fn spawn_heart(
     mut timer: ResMut<HeartSpawnTimer>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
+    score: Res<Score>,
 ) {
     timer.0.tick(time.delta());
 
     if !timer.0.just_finished() {
+        return;
+    }
+    if score.heart>=5 {
         return;
     }
 

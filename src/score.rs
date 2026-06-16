@@ -109,7 +109,7 @@ fn check_score(
     mut score: ResMut<Score>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    mut next: ResMut<NextState<GameState>>, 
+    mut next: ResMut<NextState<GameState>>,
 ) {
     let Ok(bat_t) = bat_query.single() else { return };
 
@@ -164,7 +164,7 @@ fn check_score(
             if let Ok(container) = container_query.single() {
                 commands.entity(container).with_children(|parent| {
                     parent.spawn((
-                        Heart,
+                        HeartsContainer,
                         ImageNode::new(asset_server.load("images/heart.png")),
                         Node {
                             width: px(50.0),
