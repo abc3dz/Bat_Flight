@@ -1,7 +1,7 @@
 # Bat_Flight
 A Simple game made by Bevy Game Engine
 
-<img src="https://github.com/abc3dz/Bat_Flight/blob/main/ss/BatFlight_ss1.gif" height="300" width="300">
+<img src="https://github.com/abc3dz/Bat_Flight/blob/main/ss/BatFlightV002.gif" height="300" width="300">
 
 ## Third Party Assets
 
