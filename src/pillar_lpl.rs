@@ -4,8 +4,6 @@ use bevy_wind_waker_shader::prelude::*;
 use crate::bat_lpl::Bat;
 use crate::GameState;
 use crate::LevelState;
-use crate::score::Score;
-use crate::heart_lpl::HeartsUi;
 
 const PILLAR_SPEED:      f32 = 4.0;
 const PILLAR_SPAWN_X:    f32 = 10.0;
@@ -32,20 +30,14 @@ impl Plugin for PillarPlugin {
                 PILLAR_SPAWN_SECS,
                 TimerMode::Repeating,
             )))
-            .add_systems(Update, (
-                check_collision, 
-                ).run_if(in_state(GameState::Playing)))
             .add_systems( Update,(
                     spawn_pillars,
                     move_pillars,
-                    despawn_pillars,)
-                .chain()
+                    despawn_pillars,
+                    check_collision,
+                )
                 .run_if(in_state(GameState::Playing))
                 .run_if(pillar_levels))
-            .add_systems(
-                OnEnter(LevelState::Level2),
-                cleanup_pillars,
-            )
             .add_systems(Update, draw_hitbox.run_if(in_state(GameState::GameOver)));
             
     }
@@ -87,8 +79,6 @@ fn move_pillars(
 fn check_collision(
     bat_query: Query<&Transform, With<Bat>>,
     pillar_query: Query<&Transform, With<Pillar>>,
-    heart_query: Query<Entity, With<HeartsUi>>,
-    mut score: ResMut<Score>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut next: ResMut<NextState<GameState>>,
@@ -107,15 +97,7 @@ fn check_collision(
 
         let dist = (bp - closest).length();
         if dist < BIRD_RADIUS {       
-            if score.heart <= 0{
-                next.set(GameState::GameOver);
-            } else {
-                score.heart -= 1;
-
-                if let Some(heart_entity) = heart_query.iter().next() {
-                    commands.entity(heart_entity).despawn();
-                }
-            }
+            next.set(GameState::GameOver);
 
             commands.spawn(AudioPlayer::new(
                 asset_server.load("sounds/game_over.ogg"),
@@ -133,7 +115,7 @@ fn draw_hitbox(
         gizmos.sphere(
             Isometry3d::from_translation(bat_t.translation),
             BIRD_RADIUS,
-            Color::srgb(0.0, 1.0, 0.0), // สีเขียว
+            Color::srgb(0.0, 1.0, 0.0),
         );
     }
     
@@ -144,7 +126,7 @@ fn draw_hitbox(
                 scale: Vec3::new(PIPE_HALF_W * 2.0, PIPE_HALF_H * 2.0, 1.0),
                 ..default()
             },
-            Color::srgb(1.0, 0.0, 0.0), // สีแดง
+            Color::srgb(1.0, 0.0, 0.0),
         );
     }
 }
@@ -157,15 +139,6 @@ fn despawn_pillars(
         if transform.translation.x < PILLAR_DESPAWN_X {
             commands.entity(entity).despawn();
         }
-    }
-}
-
-fn cleanup_pillars(
-    mut commands: Commands,
-    query: Query<Entity, With<Pillar>>,
-) {
-    for entity in &query {
-        commands.entity(entity).despawn();
     }
 }
 

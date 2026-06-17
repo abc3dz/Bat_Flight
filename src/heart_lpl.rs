@@ -36,10 +36,10 @@ impl Plugin for HeartPlugin {
                 Update,
                 (
                     spawn_heart,
-                    check_collision,
                     move_hearts,
                     rotate_hearts,
                     despawn_hearts,
+                    check_collision,
                 )
                 .run_if(in_state(GameState::Playing))
                 .run_if(heart_levels)
@@ -59,6 +59,9 @@ fn spawn_heart(
     if !timer.0.just_finished() {
         return;
     }
+    if score.heart>=6 {
+        return;
+    }
 
     let mut rng = rand::rng();
 
@@ -75,9 +78,7 @@ fn spawn_heart(
             .build(),
     ));
 
-    if score.heart>=5 {
-        return;
-    }
+    
     commands.spawn((
         HeartsContainer,
         Node {

@@ -92,4 +92,9 @@ fn check_level_progress(
     {
         next_level.set(LevelState::Level3);
     }
+    if *level_state.get() == LevelState::Level3
+        && score.value >= 30
+    {
+        next_level.set(LevelState::LevelEnd);
+    }
 }

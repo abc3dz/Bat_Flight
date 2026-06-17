@@ -5,7 +5,7 @@ use rand::Rng;
 use crate::{GameState, LevelState};
 use crate::score::Score;
 use crate::bat_lpl::Bat;
-use crate::heart_lpl::{Heart, HeartsUi};
+use crate::heart_lpl::HeartsUi;
 
 const GEAR_SPAWN_X: f32 = 10.0;
 const GEAR_SPAWN_SECS: f32 = 2.0;
@@ -30,12 +30,13 @@ impl Plugin for GearPlugin {
             .add_systems(
                 Update,
                 (
-                    spawn_gear,
                     check_collision,
+                    spawn_gear,
                     move_gears,
                     rotate_gears,
                     despawn_gears,
                 )
+                //.chain()
                 .run_if(in_state(GameState::Playing))
                 .run_if(in_state(LevelState::Level3))
         );
@@ -99,7 +100,6 @@ fn despawn_gears(
 fn check_collision(
     gear_query: Query<(Entity, &Transform), With<Gear>>,
     bat_query: Query<&Transform, With<Bat>>,
-    heart_query: Query<Entity, With<Heart>>,
     heartsui_query: Query<Entity, With<HeartsUi>>,
     mut score: ResMut<Score>,
     mut commands: Commands,
@@ -110,9 +110,9 @@ fn check_collision(
         let distance = bat_t
             .translation
             .distance(gear_transform.translation);
-
         if distance < 1.0 {
-            if score.heart <= 0 {
+            println!("heart = {}", score.heart);
+            if score.heart <= 1 {
                 score.heart = 3;
                 next.set(GameState::GameOver);
             }else{
@@ -121,9 +121,6 @@ fn check_collision(
             }
             commands.entity(entity).despawn();
             
-            for heart_entity in heart_query {
-                commands.entity(heart_entity).despawn();
-            }
             for heart_entity in heartsui_query {
                 commands.entity(heart_entity).despawn();
             }

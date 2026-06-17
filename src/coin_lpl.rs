@@ -30,10 +30,10 @@ impl Plugin for CoinPlugin {
                 Update,
                 (
                     spawn_coin,
-                    check_collision,
                     move_coins,
                     rotate_coins,
                     despawn_coins,
+                    check_collision,
                 )
                 .run_if(in_state(GameState::Playing))
         );

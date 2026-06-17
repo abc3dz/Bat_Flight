@@ -9,7 +9,6 @@ use bat_lpl::BatPlugin;
 
 mod pillar_lpl;
 use pillar_lpl::PillarPlugin;
-use crate::pillar_lpl::Pillar;
 
 mod coin_lpl;
 use coin_lpl::CoinPlugin;
@@ -25,6 +24,9 @@ use background::BackgroundPlugin;
 
 mod menu;
 use menu::MenuPlugin;
+
+mod level_end;
+use level_end::LevelEndPlugin;
 
 #[derive(Component)]
 struct GameOverText;
@@ -43,6 +45,15 @@ pub enum LevelState {
     Level1,
     Level2,
     Level3,
+    LevelEnd
+}
+
+#[derive(Component)]
+pub struct LevelEndUi;
+
+#[derive(Resource, Default)]
+pub struct TimeScore {
+    pub seconds: f32,
 }
 
 fn main() {
@@ -69,6 +80,7 @@ fn main() {
         .add_plugins(CoinPlugin)         
         .add_plugins(GearPlugin)   
         .add_plugins(HeartPlugin)
+        .add_plugins(LevelEndPlugin)
         .add_systems(Startup, setup)
         .add_systems(Update, restart_input.run_if(in_state(GameState::GameOver)))
         .add_systems(OnEnter(GameState::GameOver), show_gameover)
@@ -131,20 +143,12 @@ fn restart_input(
     mouse:    Res<ButtonInput<MouseButton>>,
     touches:  Res<Touches>,
     mut next: ResMut<NextState<GameState>>,
-    //mut score: ResMut<Score>,
-    pipes: Query<Entity, With<Pillar>>,
-    mut commands: Commands,
 ) {
     let pressed = keyboard.just_pressed(KeyCode::Space)
         || mouse.just_pressed(MouseButton::Left)
         || touches.any_just_pressed();
 
     if pressed {
-        for entity in &pipes {
-            commands.entity(entity).despawn();
-        }
-
-        //score.value = 0.0;
         next.set(GameState::Playing);
     }
 }
