@@ -104,6 +104,7 @@ fn check_collision(
     mut score: ResMut<Score>,
     mut commands: Commands,
     mut next: ResMut<NextState<GameState>>,
+    asset_server: Res<AssetServer>,
 ){
     let Ok(bat_t) = bat_query.single() else { return };
     for (entity, gear_transform) in &gear_query {
@@ -111,7 +112,7 @@ fn check_collision(
             .translation
             .distance(gear_transform.translation);
         if distance < 1.0 {
-            println!("heart = {}", score.heart);
+            //println!("heart = {}", score.heart);
             if score.heart <= 1 {
                 score.heart = 3;
                 next.set(GameState::GameOver);
@@ -124,6 +125,9 @@ fn check_collision(
             for heart_entity in heartsui_query {
                 commands.entity(heart_entity).despawn();
             }
+            commands.spawn(AudioPlayer::new(
+            asset_server.load("sounds/gear.ogg"),
+            ));
         }
     }
 }

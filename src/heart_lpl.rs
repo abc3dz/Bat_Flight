@@ -169,6 +169,9 @@ fn check_collision(
                         }
                     ));
                 });
+                commands.spawn(AudioPlayer::new(
+                asset_server.load("sounds/heart.ogg"),
+                ));
             }
         }
     }

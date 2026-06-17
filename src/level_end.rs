@@ -30,7 +30,7 @@ impl Plugin for LevelEndPlugin {
 
 fn spawn_ending_text(
     mut commands: Commands,
-    //asset_server: Res<AssetServer>,
+    asset_server: Res<AssetServer>,
 ) {
     commands.spawn((
         Node {
@@ -48,6 +48,10 @@ fn spawn_ending_text(
             TextColor(Color::srgb(1.0, 0.7, 0.2)),
         ));
     });
+
+    commands.spawn(AudioPlayer::new(
+    asset_server.load("sounds/ending.ogg"),
+    ));
 }
 
 fn cleanup_game(
