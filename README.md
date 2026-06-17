@@ -10,3 +10,5 @@ This project uses code from bevy_wind_waker_shader by Jan Hohenheim.
 Source: https://github.com/janhohenheim/bevy_wind_waker_shader
 
 Licensed under MIT OR Apache-2.0.
+
+Example: https://abc3dz.github.io/Bat_Flight/
