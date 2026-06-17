@@ -39,7 +39,7 @@ impl Plugin for PillarPlugin {
                 .run_if(in_state(GameState::Playing))
                 .run_if(pillar_levels))
             .add_systems(Update, draw_hitbox.run_if(in_state(GameState::GameOver)));
-            
+            app.add_systems(OnEnter(GameState::GameOver), setup_game_over);
     }
 }
 
@@ -98,7 +98,7 @@ fn check_collision(
         let dist = (bp - closest).length();
         if dist < BIRD_RADIUS {       
             next.set(GameState::GameOver);
-
+            
             commands.spawn(AudioPlayer::new(
                 asset_server.load("sounds/game_over.ogg"),
             ));
@@ -149,4 +149,11 @@ fn pillar_levels(
         level_state.get(),
         LevelState::Level2 | LevelState::Level3
     )
+}
+fn setup_game_over(
+    mut bat_query: Query<&mut Transform, With<Bat>>,
+) {
+    let Ok(mut bat_t) = bat_query.single_mut() else { return };
+
+    bat_t.translation.y = 0.0;
 }

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{GameState, LevelState};
+use crate::LevelState;
 use crate::bat_lpl::Bat;
 use crate::coin_lpl::Coin;
 use crate::pillar_lpl::Pillar;
@@ -15,15 +15,12 @@ pub struct LevelEndPlugin;
 impl Plugin for LevelEndPlugin {
     fn build(&self, app: &mut App) {
         app
-            .add_systems(
-                Update,
-                (
-                    spawn_ending_text,
-                    cleanup_game
-                )
-                //.chain()
-                .run_if(in_state(GameState::Playing))
-                .run_if(in_state(LevelState::LevelEnd))
+        .add_systems(
+            OnEnter(LevelState::LevelEnd),
+            (
+                spawn_ending_text,
+                cleanup_game,
+            )
         );
     }
 }

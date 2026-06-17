@@ -110,9 +110,9 @@ fn check_collision(
 
         if distance < 1.0 {
             if coin_transform.translation.y < -1.0 {
-                score.value += 1;
-            }else{
                 score.value += 5;
+            }else{
+                score.value += 1;
             }
             commands.entity(entity).despawn();
             commands.spawn(AudioPlayer::new(
