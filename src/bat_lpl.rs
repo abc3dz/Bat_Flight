@@ -49,7 +49,7 @@ fn spawn_bat
 
     commands.spawn((
             SceneRoot(asset_server.load("models/batlowpoly.glb#Scene0")),
-            Transform::from_xyz(-3.0, 10.0, 0.0)
+            Transform::from_xyz(-3.0, 4.0, 0.0)
                 .with_rotation(Quat::from_rotation_y(std::f32::consts::FRAC_PI_2)),
             WindWakerShaderBuilder::default()
                 .time_of_day(TimeOfDay::Day)

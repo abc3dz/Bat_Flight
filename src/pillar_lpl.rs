@@ -38,8 +38,8 @@ impl Plugin for PillarPlugin {
                 )
                 .run_if(in_state(GameState::Playing))
                 .run_if(pillar_levels))
-            .add_systems(Update, draw_hitbox.run_if(in_state(GameState::GameOver)));
-            app.add_systems(OnEnter(GameState::GameOver), setup_game_over);
+            .add_systems(Update, draw_hitbox.run_if(in_state(GameState::GameOver)))
+            .add_systems(OnEnter(GameState::GameOver), setup_game_over);
     }
 }
 
@@ -151,9 +151,10 @@ fn pillar_levels(
     )
 }
 fn setup_game_over(
-    mut bat_query: Query<&mut Transform, With<Bat>>,
+    mut bat_query: Query<(&mut Bat, &mut Transform), With<Bat>>,
 ) {
-    let Ok(mut bat_t) = bat_query.single_mut() else { return };
+    let Ok((mut bat, mut transform)) = bat_query.single_mut() else { return };
 
-    bat_t.translation.y = 0.0;
+    transform.translation.y = 0.0;
+    bat.velocity_y= 2.0;
 }
