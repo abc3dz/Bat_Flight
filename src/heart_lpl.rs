@@ -7,8 +7,8 @@ use crate::score::Score;
 use crate::bat_lpl::Bat;
 
 const HEART_SPAWN_X: f32 = 10.0;
-const HEART_SPAWN_SECS: f32 = 2.0;
-const HEART_SPEED: f32 = 4.0;
+const HEART_SPAWN_SECS: f32 = 3.0;
+const HEART_SPEED: f32 = 2.0;
 const HEART_DESPAWN_X: f32 = -10.0;
 
 #[derive(Component)]
@@ -169,7 +169,6 @@ fn check_collision(
                         }
                     ));
                 });
-                
             }
             commands.spawn(AudioPlayer::new(
             asset_server.load("sounds/heart.ogg"),

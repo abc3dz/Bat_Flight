@@ -8,8 +8,8 @@ use crate::bat_lpl::{Bat, AnimationToPlay};
 use crate::heart_lpl::HeartsUi;
 
 const OWL_SPAWN_X: f32 = 10.0;
-const OWL_SPAWN_SECS: f32 = 2.0;
-const OWL_SPEED: f32 = 4.0;
+const OWL_SPAWN_SECS: f32 = 4.0;
+const OWL_SPEED: f32 = 8.0;
 const OWL_DESPAWN_X: f32 = -10.0;
 
 #[derive(Component)]
@@ -37,7 +37,7 @@ impl Plugin for OwlPlugin {
                 )
                 //.chain()
                 .run_if(in_state(GameState::Playing))
-                //.run_if(in_state(LevelState::Level3))
+                //.run_if(in_state(LevelState::Level1))
         );
     }
 }
@@ -59,7 +59,7 @@ fn spawn_owl(
 
     let y = rng.random_range(-4.0..=4.0);
 
-    let clip = asset_server.load("models/owllowpoly.glb#Animation0");
+    let clip = asset_server.load("models/owllowpoly.glb#Animation1");
     let mut graph = AnimationGraph::new();
     let index = graph.add_clip(clip, 1.0, graph.root);
     let graph_handle = graphs.add(graph);
@@ -71,7 +71,8 @@ fn spawn_owl(
     commands.spawn((
         Owl,
         SceneRoot(asset_server.load("models/owllowpoly.glb#Scene0")),
-        Transform::from_xyz(OWL_SPAWN_X, y, 0.0),
+        Transform::from_xyz(OWL_SPAWN_X, y, 0.0)
+        .with_rotation(Quat::from_rotation_y(-std::f32::consts::FRAC_PI_2)),
         GlobalTransform::default(),
         WindWakerShaderBuilder::default()
             .time_of_day(TimeOfDay::Day)
@@ -99,6 +100,7 @@ fn despawn_owls(
         }
     }
 }
+
 fn check_collision(
     owl_query: Query<(Entity, &Transform), With<Owl>>,
     bat_query: Query<&Transform, With<Bat>>,

@@ -8,8 +8,8 @@ use crate::bat_lpl::Bat;
 use crate::heart_lpl::HeartsUi;
 
 const GEAR_SPAWN_X: f32 = 10.0;
-const GEAR_SPAWN_SECS: f32 = 2.0;
-const GEAR_SPEED: f32 = 4.0;
+const GEAR_SPAWN_SECS: f32 = 1.5;
+const GEAR_SPEED: f32 = 5.0;
 const GEAR_DESPAWN_X: f32 = -10.0;
 
 #[derive(Component)]
