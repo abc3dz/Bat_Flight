@@ -142,12 +142,12 @@ fn despawn_pillars(
     }
 }
 
-fn pillar_levels(
+pub fn pillar_levels(
     level_state: Res<State<LevelState>>,
 ) -> bool {
     matches!(
         level_state.get(),
-        LevelState::Level2 | LevelState::Level3
+        LevelState::Level2 | LevelState::Level3 | LevelState::Level4
     )
 }
 fn setup_game_over(

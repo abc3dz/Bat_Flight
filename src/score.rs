@@ -5,14 +5,20 @@ use crate::LevelState;
 
 #[derive(Resource)]
 pub struct Score {
-    pub value: u32,
+    pub coin: u32,
     pub heart: u32,
+    pub pillar: u32,
+    pub gear: u32,
+    pub owl: u32,
 }
 impl Default for Score {
     fn default() -> Self {
         Self {
-            value: 0,
+            coin: 0,
             heart: 3,
+            pillar: 0,
+            gear: 0,
+            owl: 0
         }
     }
 }
@@ -60,7 +66,7 @@ fn setup_score_ui(mut commands: Commands, score: Res<Score>, asset_server: Res<A
             ));
 
             parent.spawn((
-                Text::new(score.value.to_string()),
+                Text::new(score.coin.to_string()),
                 ScoreText,
             ));
         });
@@ -73,7 +79,7 @@ fn update_score_ui(
 ) {
     if !score.is_changed() { return; }
     for mut text in &mut query {
-        **text = score.value.to_string();
+        **text = score.coin.to_string();
     }
 }
 
@@ -83,17 +89,22 @@ fn check_level_progress(
     mut next_level: ResMut<NextState<LevelState>>,
 ) {
     if *level_state.get() == LevelState::Level1
-        && score.value >= 10
+        && score.coin >= 10
     {
         next_level.set(LevelState::Level2);
     }
     if *level_state.get() == LevelState::Level2
-        && score.value >= 20
+        && score.coin >= 20
     {
         next_level.set(LevelState::Level3);
     }
     if *level_state.get() == LevelState::Level3
-        && score.value >= 30
+        && score.coin >= 30
+    {
+        next_level.set(LevelState::Level4);
+    }
+    if *level_state.get() == LevelState::Level4
+        && score.coin >= 50
     {
         next_level.set(LevelState::LevelEnd);
     }

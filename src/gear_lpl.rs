@@ -117,7 +117,7 @@ fn check_collision(
                 score.heart = 3;
                 next.set(GameState::GameOver);
             }else{
-                score.value -= 1;
+                score.coin -= 1;
                 score.heart -= 1;
             }
             commands.entity(entity).despawn();

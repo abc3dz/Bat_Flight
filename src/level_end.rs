@@ -3,9 +3,12 @@ use bevy::prelude::*;
 use crate::LevelState;
 use crate::bat_lpl::Bat;
 use crate::coin_lpl::Coin;
+use crate::owl_lpl::Owl;
 use crate::pillar_lpl::Pillar;
 use crate::gear_lpl::Gear;
+use crate::score::Score;
 use crate::heart_lpl::{Heart, HeartsUi};
+
 
 #[derive(Component)]
 pub struct LevelEnd;
@@ -28,7 +31,21 @@ impl Plugin for LevelEndPlugin {
 fn spawn_ending_text(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
+    score: Res<Score>,
 ) {
+    let summary = format!(
+        "Thank you for playing!!\n\n\
+        Coins Collected: {}\n\
+        Hearts Collected: {}\n\
+        Pillars Passed: {}\n\
+        Gears Avoided: {}\n\
+        Owls Defeated: {}",
+        score.coin,
+        score.heart,
+        score.pillar,
+        score.gear,
+        score.owl,
+    );
     commands.spawn((
         Node {
             width: Val::Percent(100.0),
@@ -40,8 +57,11 @@ fn spawn_ending_text(
         LevelEnd,
     )).with_children(|parent| {
         parent.spawn((
-            Text::new("Thank you for playing!!"),
-            TextFont { font_size: 40.0, ..default() },
+            Text::new(summary),
+            TextFont {
+                font_size: 40.0,
+                ..default()
+            },
             TextColor(Color::srgb(1.0, 0.7, 0.2)),
         ));
     });
@@ -58,7 +78,8 @@ fn cleanup_game(
     pillar_query: Query<Entity, With<Pillar>>,
     gear_query: Query<Entity, With<Gear>>,
     heart_query: Query<Entity, With<Heart>>,
-    heartsui_query: Query<Entity, With<HeartsUi>>
+    heartsui_query: Query<Entity, With<HeartsUi>>,
+    owl_query: Query<Entity, With<Owl>>
 ) {
     for entity in &bat_query {
         commands.entity(entity).despawn();
@@ -76,6 +97,9 @@ fn cleanup_game(
         commands.entity(entity).despawn();
     }
     for entity in heartsui_query {
+        commands.entity(entity).despawn();
+    }
+    for entity in owl_query {
         commands.entity(entity).despawn();
     }
 }
