@@ -2,10 +2,10 @@ use bevy::prelude::*;
 use bevy_wind_waker_shader::prelude::*;
 use rand::Rng;
 
-use crate::{GameState, LevelState};
+use crate::GameState;
 use crate::score::Score;
 use crate::bat_lpl::Bat;
-
+use crate::pillar_lpl::pillar_levels;
 
 const HEART_SPAWN_X: f32 = 10.0;
 const HEART_SPAWN_SECS: f32 = 3.0;
@@ -43,7 +43,7 @@ impl Plugin for HeartPlugin {
                     check_collision,
                 )
                 .run_if(in_state(GameState::Playing))
-                .run_if(heart_levels)
+                .run_if(pillar_levels)
         );
     }
 }
@@ -132,14 +132,7 @@ fn despawn_hearts(
         }
     }
 }
-fn heart_levels(
-    level_state: Res<State<LevelState>>,
-) -> bool {
-    matches!(
-        level_state.get(),
-        LevelState::Level2 | LevelState::Level3
-    )
-}
+
 fn check_collision(
     mut commands: Commands,
     bat_query: Query<&Transform, With<Bat>>,

@@ -4,6 +4,7 @@ use bevy_wind_waker_shader::prelude::*;
 use crate::bat_lpl::Bat;
 use crate::GameState;
 use crate::LevelState;
+use crate::score::Score;
 
 const PILLAR_SPEED:      f32 = 4.0;
 const PILLAR_SPAWN_X:    f32 = 10.0;
@@ -82,6 +83,7 @@ fn check_collision(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut next: ResMut<NextState<GameState>>,
+    mut score: ResMut<Score>,
 ) {
     let Ok(bat_t) = bat_query.single() else { return };
     let bp = bat_t.translation;
@@ -96,7 +98,9 @@ fn check_collision(
         );
 
         let dist = (bp - closest).length();
-        if dist < BIRD_RADIUS {       
+        if dist < BIRD_RADIUS {
+            score.pillar += 1;
+            
             next.set(GameState::GameOver);
             
             commands.spawn(AudioPlayer::new(

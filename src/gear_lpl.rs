@@ -112,7 +112,7 @@ fn check_collision(
             .translation
             .distance(gear_transform.translation);
         if distance < 1.0 {
-            //println!("heart = {}", score.heart);
+            score.gear += 1;
             if score.heart <= 1 {
                 score.heart = 3;
                 next.set(GameState::GameOver);

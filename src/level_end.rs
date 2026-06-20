@@ -37,9 +37,9 @@ fn spawn_ending_text(
         "Thank you for playing!!\n\n\
         Coins Collected: {}\n\
         Hearts Collected: {}\n\
-        Pillars Passed: {}\n\
-        Gears Avoided: {}\n\
-        Owls Defeated: {}",
+        Pillars Hit: {}\n\
+        Gears Hit: {}\n\
+        Owls Hit: {}",
         score.coin,
         score.heart,
         score.pillar,

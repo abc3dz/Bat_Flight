@@ -126,7 +126,7 @@ fn check_collision(
             .translation
             .distance(owl_transform.translation);
         if distance < 1.0 {
-            //println!("heart = {}", score.heart);
+            score.owl += 1;
             if score.heart <= 1 {
                 score.heart = 3;
                 next.set(GameState::GameOver);
