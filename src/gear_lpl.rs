@@ -38,7 +38,7 @@ impl Plugin for GearPlugin {
                 )
                 //.chain()
                 .run_if(in_state(GameState::Playing))
-                .run_if(in_state(LevelState::Level3))
+                .run_if(gear_levels)
         );
     }
 }
@@ -130,4 +130,12 @@ fn check_collision(
             ));
         }
     }
+}
+pub fn gear_levels(
+    level_state: Res<State<LevelState>>,
+) -> bool {
+    matches!(
+        level_state.get(),
+        LevelState::Level3 | LevelState::Level4
+    )
 }

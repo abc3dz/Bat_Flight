@@ -52,9 +52,6 @@ pub enum LevelState {
     LevelEnd
 }
 
-#[derive(Component)]
-pub struct LevelEndUi;
-
 #[derive(Resource, Default)]
 pub struct TimeScore {
     pub seconds: f32,
@@ -72,7 +69,7 @@ fn main() {
             }),
             ..default()
         }))
-        
+        .init_resource::<TimeScore>()
         .init_state::<GameState>()
         .init_state::<LevelState>()
         .init_gizmo_group::<DefaultGizmoConfigGroup>() 
@@ -88,6 +85,7 @@ fn main() {
         .add_plugins(OwlPlugin)
         .add_systems(Startup, setup)
         .add_systems(Update, restart_input.run_if(in_state(GameState::GameOver)))
+        .add_systems(Update,update_time_score.run_if(in_state(GameState::Playing)))
         .add_systems(OnEnter(GameState::GameOver), show_gameover)
         .add_systems(OnExit(GameState::GameOver),  hide_gameover)
         .run();
@@ -156,4 +154,10 @@ fn restart_input(
     if pressed {
         next.set(GameState::Playing);
     }
+}
+fn update_time_score(
+    time: Res<Time>,
+    mut time_score: ResMut<TimeScore>,
+) {
+    time_score.seconds += time.delta_secs();
 }

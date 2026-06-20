@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_wind_waker_shader::prelude::*;
 use rand::Rng;
 
-use crate::GameState;
+use crate::{GameState, LevelState};
 use crate::bat_lpl::Bat;
 use crate::score::Score;
 
@@ -36,6 +36,7 @@ impl Plugin for CoinPlugin {
                     check_collision,
                 )
                 .run_if(in_state(GameState::Playing))
+                .run_if(coin_levels)
         );
     }
 }
@@ -120,4 +121,12 @@ fn check_collision(
             ));
         }
     }
+}
+pub fn coin_levels(
+    level_state: Res<State<LevelState>>,
+) -> bool {
+    matches!(
+        level_state.get(),
+        LevelState::Level1 | LevelState::Level2 | LevelState::Level3 | LevelState::Level4
+    )
 }

@@ -8,6 +8,7 @@ use crate::pillar_lpl::Pillar;
 use crate::gear_lpl::Gear;
 use crate::score::Score;
 use crate::heart_lpl::{Heart, HeartsUi};
+use crate::TimeScore;
 
 
 #[derive(Component)]
@@ -32,20 +33,29 @@ fn spawn_ending_text(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     score: Res<Score>,
+    time_score: Res<TimeScore>,
 ) {
+    let total_seconds = time_score.seconds as u32;
+    let minutes = total_seconds / 60;
+    let seconds = total_seconds % 60;
+    
     let summary = format!(
         "Thank you for playing!!\n\n\
+        Play Time: {:02}:{:02}\n\
         Coins Collected: {}\n\
         Hearts Collected: {}\n\
         Pillars Hit: {}\n\
         Gears Hit: {}\n\
         Owls Hit: {}",
+        minutes,
+        seconds,
         score.coin,
         score.heart,
         score.pillar,
         score.gear,
         score.owl,
     );
+    
     commands.spawn((
         Node {
             width: Val::Percent(100.0),
