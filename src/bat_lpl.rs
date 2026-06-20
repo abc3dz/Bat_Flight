@@ -100,8 +100,6 @@ fn bat_physics(
         transform.translation.y += bat.velocity_y * time.delta_secs();
         if transform.translation.y < -5.0 {
             next.set(GameState::GameOver);
-            transform.translation.y = 2.0;
-            bat.velocity_y = 2.0;
         }
     }
 }
