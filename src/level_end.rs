@@ -9,7 +9,10 @@ use crate::gear_lpl::Gear;
 use crate::score::Score;
 use crate::heart_lpl::{Heart, HeartsUi};
 use crate::TimeScore;
+use crate::GameState;
 
+#[derive(Component)]
+pub struct RestartButton;
 
 #[derive(Component)]
 pub struct LevelEnd;
@@ -19,13 +22,17 @@ pub struct LevelEndPlugin;
 impl Plugin for LevelEndPlugin {
     fn build(&self, app: &mut App) {
         app
+        .add_systems(Update, debug_level_end)
         .add_systems(
-            OnEnter(LevelState::LevelEnd),
-            (
-                spawn_ending_text,
-                cleanup_game,
-            )
-        );
+            Update,
+            restart_button_system
+                .run_if(in_state(LevelState::LevelEnd))
+        )
+        .add_systems(OnEnter(LevelState::LevelEnd),(spawn_ending_text, cleanup_game,))
+        .add_systems(OnExit(LevelState::LevelEnd), cleanup_level_end);
+
+        
+
     }
 }
 
@@ -60,6 +67,7 @@ fn spawn_ending_text(
         Node {
             width: Val::Percent(100.0),
             height: Val::Percent(100.0),
+            flex_direction: FlexDirection::Column,
             align_items: AlignItems::Center,
             justify_content: JustifyContent::Center,
             ..default()
@@ -74,7 +82,31 @@ fn spawn_ending_text(
             },
             TextColor(Color::srgb(1.0, 0.7, 0.2)),
         ));
+        parent.spawn((
+            Button,
+            Node {
+                width: px(220.0),
+                height: px(60.0),
+                margin: UiRect::top(px(30.0)),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                ..default()
+            },
+            BackgroundColor(Color::srgb(0.2, 0.2, 0.8)),
+            RestartButton,
+        ))
+        .with_children(|parent| {
+            parent.spawn((
+                Text::new("Restart Game"),
+                TextFont {
+                    font_size: 30.0,
+                    ..default()
+                },
+                TextColor(Color::WHITE),
+            ));
+        });
     });
+    
 
     commands.spawn(AudioPlayer::new(
     asset_server.load("sounds/ending.ogg"),
@@ -110,6 +142,44 @@ fn cleanup_game(
         commands.entity(entity).despawn();
     }
     for entity in owl_query {
+        commands.entity(entity).despawn();
+    }
+}
+
+fn debug_level_end(
+    keys: Res<ButtonInput<KeyCode>>,
+    mut next_level_state: ResMut<NextState<LevelState>>,
+) {
+    if keys.just_pressed(KeyCode::F12) {
+        next_level_state.set(LevelState::LevelEnd);
+    }
+}
+fn restart_button_system(
+    interaction_query: Query<
+        &Interaction,
+        (Changed<Interaction>, With<RestartButton>)
+    >,
+    mut next_game_state: ResMut<NextState<GameState>>,
+    mut next_level_state: ResMut<NextState<LevelState>>,
+    mut score: ResMut<Score>,
+    mut time_score: ResMut<TimeScore>,
+) {
+    for interaction in &interaction_query {
+        if *interaction == Interaction::Pressed {
+            println!("Restart Clicked!");
+            *score = Score::default();
+            *time_score = TimeScore::default();
+
+            next_level_state.set(LevelState::Level1);
+            next_game_state.set(GameState::Playing);
+        }
+    }
+}
+fn cleanup_level_end(
+    mut commands: Commands,
+    query: Query<Entity, With<LevelEnd>>,
+) {
+    for entity in &query {
         commands.entity(entity).despawn();
     }
 }

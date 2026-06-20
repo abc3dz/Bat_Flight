@@ -23,12 +23,14 @@ impl Plugin for BatPlugin {
     fn build(&self, app: &mut App) {
         app
         .add_plugins(WindWakerShaderPlugin::default())
-        .add_systems(Startup, spawn_bat)
+        //.add_systems(Startup, spawn_bat)
         .add_systems(Update, (
             play_animation_when_ready,
             bat_input,
             bat_physics,
-        ).chain().run_if(in_state(GameState::Playing)));
+        ).chain().run_if(in_state(GameState::Playing)))
+        .add_systems(OnEnter(GameState::GameOver), cleanup_bat)
+        .add_systems(OnEnter(GameState::Playing), spawn_bat);
     }
 }
 
@@ -49,7 +51,7 @@ fn spawn_bat
 
     commands.spawn((
             SceneRoot(asset_server.load("models/batlowpoly.glb#Scene0")),
-            Transform::from_xyz(-3.0, 5.0, 0.0)
+            Transform::from_xyz(-3.0, 3.0, 0.0)
                 .with_rotation(Quat::from_rotation_y(std::f32::consts::FRAC_PI_2)),
             WindWakerShaderBuilder::default()
                 .time_of_day(TimeOfDay::Day)
@@ -98,7 +100,7 @@ fn bat_physics(
         transform.translation.y += bat.velocity_y * time.delta_secs();
         if transform.translation.y < -5.0 {
             next.set(GameState::GameOver);
-            transform.translation.y = 0.0;
+            transform.translation.y = 2.0;
             bat.velocity_y = 2.0;
         }
     }
@@ -112,5 +114,14 @@ fn play_animation_when_ready(
     for (entity, mut player) in &mut players {
         commands.entity(entity).insert(AnimationGraphHandle(anim.graph.clone()));
         player.play(anim.index).repeat();
+    }
+}
+
+fn cleanup_bat(
+    mut commands: Commands,
+    query: Query<Entity, With<Bat>>,
+) {
+    for entity in &query {
+        commands.entity(entity).despawn();
     }
 }
