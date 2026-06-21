@@ -16,7 +16,7 @@ const HEART_DESPAWN_X: f32 = -10.0;
 pub struct Heart;
 
 #[derive(Component)]
-struct HeartsContainer;
+pub struct HeartsContainer;
 
 #[derive(Component)]
 pub struct HeartsUi;

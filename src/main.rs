@@ -32,7 +32,7 @@ mod owl_lpl;
 use owl_lpl::OwlMinionPlugin;
 
 mod owl_boss_lpl;
-use owl_lpl::OwlBossPlugin;
+use owl_boss_lpl::OwlBossPlugin;
 
 #[derive(Component)]
 struct GameOverText;
@@ -52,7 +52,6 @@ pub enum LevelState {
     Level2,
     Level3,
     Level4,
-    Level5,
     LevelEnd
 }
 
