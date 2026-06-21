@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use bevy_wind_waker_shader::prelude::*;
 use rand::Rng;
+use bevy::audio::Volume;
 
 use crate::{GameState, LevelState};
 use crate::score::Score;
@@ -13,26 +14,28 @@ const OWL_SPEED: f32 = 9.0;
 const OWL_DESPAWN_X: f32 = -10.0;
 
 #[derive(Component)]
-pub struct OwlMinion;
+pub struct OwlBoss;
 
 #[derive(Resource)]
 struct OwlSpawnTimer(Timer);
 
-pub struct OwlMinionPlugin;
+pub struct OwlBossPlugin;
 
-impl Plugin for OwlMinionPlugin {
+impl Plugin for OwlBossPlugin {
     fn build(&self, app: &mut App) {
         app
             .insert_resource(OwlSpawnTimer(Timer::from_seconds(
                 OWL_SPAWN_SECS,
                 TimerMode::Repeating,
             )))
+            //.add_systems(OnEnter(LevelState::Level1),spawn_owl_boss,)
             .add_systems(
                 Update,
                 (
                     check_collision,
                     spawn_owl_minion,
                     owl_minion_move,
+                    owl_boss_move,
                     despawn_owls,
                 )
                 //.chain()
@@ -84,6 +87,54 @@ fn spawn_owl_minion(
         // PlaybackSettings::LOOP.with_volume(Volume::Linear(0.1)),
     ));
     
+}
+fn spawn_owl_boss(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut graphs: ResMut<Assets<AnimationGraph>>,
+){
+    let clip = asset_server.load("models/owllowpoly.glb#Animation1");
+    let mut graph = AnimationGraph::new();
+    let index = graph.add_clip(clip, 1.0, graph.root);
+    let graph_handle = graphs.add(graph);
+    commands.insert_resource(AnimationToPlay {
+        graph: graph_handle,
+        index,
+    });
+
+    commands.spawn((
+        OwlBoss,
+        SceneRoot(asset_server.load("models/owllowpoly.glb#Scene0")),
+        Transform::from_xyz(5.0, 0.0, 0.0)
+        .with_rotation(Quat::from_rotation_y(-std::f32::consts::FRAC_PI_2)),
+        GlobalTransform::default(),
+        WindWakerShaderBuilder::default()
+            .time_of_day(TimeOfDay::Day)
+            .weather(Weather::Sunny)
+            .build(),
+        AudioPlayer::new(
+        asset_server.load("sounds/owl_ap.ogg")
+        ),PlaybackSettings::LOOP.with_volume(Volume::Linear(0.1))
+    ));
+
+}
+fn owl_boss_move(
+    bat_query: Query<&Transform, (With<Bat>, Without<OwlBoss>)>,
+    mut owl_query: Query<&mut Transform, With<OwlBoss>>,
+    // asset_server: Res<AssetServer>,
+    // mut commands: Commands,
+) {
+    let Ok(bat_transform) = bat_query.single() else {
+        return;
+    };
+
+    for mut owl_transform in &mut owl_query {
+        owl_transform.translation.y = bat_transform.translation.y;
+    }
+
+    // commands.spawn(AudioPlayer::new(
+    // asset_server.load("sounds/owl_atk.ogg"),
+    // ));
 }
 
 fn owl_minion_move(

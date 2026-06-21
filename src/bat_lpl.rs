@@ -34,12 +34,11 @@ impl Plugin for BatPlugin {
     }
 }
 
-fn spawn_bat
-    (
+fn spawn_bat(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut graphs: ResMut<Assets<AnimationGraph>>,
-    ) {
+) {
         let clip = asset_server.load("models/batlowpoly.glb#Animation0");
         let mut graph = AnimationGraph::new();
         let index = graph.add_clip(clip, 1.0, graph.root);

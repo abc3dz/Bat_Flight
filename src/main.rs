@@ -29,7 +29,10 @@ mod level_end;
 use level_end::LevelEndPlugin;
 
 mod owl_lpl;
-use owl_lpl::OwlPlugin;
+use owl_lpl::OwlMinionPlugin;
+
+mod owl_boss_lpl;
+use owl_lpl::OwlBossPlugin;
 
 #[derive(Component)]
 struct GameOverText;
@@ -49,6 +52,7 @@ pub enum LevelState {
     Level2,
     Level3,
     Level4,
+    Level5,
     LevelEnd
 }
 
@@ -82,7 +86,8 @@ fn main() {
         .add_plugins(GearPlugin)   
         .add_plugins(HeartPlugin)
         .add_plugins(LevelEndPlugin)
-        .add_plugins(OwlPlugin)
+        .add_plugins(OwlMinionPlugin)
+        .add_plugins(OwlBossPlugin)
         .add_systems(Startup, setup)
         .add_systems(Update, restart_input.run_if(in_state(GameState::GameOver)))
         .add_systems(Update,update_time_score.run_if(in_state(GameState::Playing)))
