@@ -100,12 +100,10 @@ fn check_collision(
         let dist = (bp - closest).length();
         if dist < BIRD_RADIUS {
             score.pillar += 1;
-            
-            next.set(GameState::GameOver);
-            
             commands.spawn(AudioPlayer::new(
                 asset_server.load("sounds/game_over.ogg"),
             ));
+            next.set(GameState::GameOver);
         }
     }
 }

@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::LevelState;
 use crate::bat_lpl::Bat;
 use crate::coin_lpl::Coin;
-use crate::owl_lpl::Owl;
+use crate::owl_lpl::OwlMinion;
 use crate::pillar_lpl::Pillar;
 use crate::gear_lpl::Gear;
 use crate::score::Score;
@@ -30,9 +30,6 @@ impl Plugin for LevelEndPlugin {
         )
         .add_systems(OnEnter(LevelState::LevelEnd),(spawn_ending_text, cleanup_game,))
         .add_systems(OnExit(LevelState::LevelEnd), cleanup_level_end);
-
-        
-
     }
 }
 
@@ -121,7 +118,7 @@ fn cleanup_game(
     gear_query: Query<Entity, With<Gear>>,
     heart_query: Query<Entity, With<Heart>>,
     heartsui_query: Query<Entity, With<HeartsUi>>,
-    owl_query: Query<Entity, With<Owl>>
+    owl_query: Query<Entity, With<OwlMinion>>
 ) {
     for entity in &bat_query {
         commands.entity(entity).despawn();

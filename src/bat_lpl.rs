@@ -93,12 +93,17 @@ fn bat_input(
 fn bat_physics(
     time: Res<Time>,
     mut query: Query<(&mut Bat, &mut Transform)>,
-    mut next: ResMut<NextState<GameState>>, 
+    mut next: ResMut<NextState<GameState>>,
+    asset_server: Res<AssetServer>,
+    mut commands: Commands,
 ) {
     for (mut bat, mut transform) in &mut query {
         bat.velocity_y += GRAVITY * time.delta_secs();
         transform.translation.y += bat.velocity_y * time.delta_secs();
         if transform.translation.y < -5.0 {
+            commands.spawn(AudioPlayer::new(
+                asset_server.load("sounds/game_over.ogg"),
+            ));
             next.set(GameState::GameOver);
         }
     }

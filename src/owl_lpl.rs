@@ -9,12 +9,14 @@ use crate::bat_lpl::{Bat, AnimationToPlay};
 use crate::heart_lpl::HeartsUi;
 
 const OWL_SPAWN_X: f32 = 10.0;
-const OWL_SPAWN_SECS: f32 = 2.0;
+const OWL_SPAWN_SECS: f32 = 5.0;
 const OWL_SPEED: f32 = 9.0;
 const OWL_DESPAWN_X: f32 = -10.0;
 
 #[derive(Component)]
-pub struct Owl;
+pub struct OwlMinion;
+#[derive(Component)]
+pub struct OwlBoss;
 
 #[derive(Resource)]
 struct OwlSpawnTimer(Timer);
@@ -33,12 +35,13 @@ impl Plugin for OwlPlugin {
                 (
                     check_collision,
                     spawn_owl,
-                    move_owls,
+                    //move_owls,
+                    move_follow_bat,
                     despawn_owls,
                 )
                 //.chain()
                 .run_if(in_state(GameState::Playing))
-                .run_if(in_state(LevelState::Level4))
+                .run_if(in_state(LevelState::Level1))
         );
     }
 }
@@ -70,7 +73,7 @@ fn spawn_owl(
     });
 
     commands.spawn((
-        Owl,
+        OwlMinion,
         SceneRoot(asset_server.load("models/owllowpoly.glb#Scene0")),
         Transform::from_xyz(OWL_SPAWN_X, y, 0.0)
         .with_rotation(Quat::from_rotation_y(-std::f32::consts::FRAC_PI_2)),
@@ -79,16 +82,43 @@ fn spawn_owl(
             .time_of_day(TimeOfDay::Day)
             .weather(Weather::Sunny)
             .build(),
+        // AudioPlayer::new(
+        // asset_server.load("sounds/owl_ap.ogg")
+        // ),
+        // PlaybackSettings::LOOP.with_volume(Volume::Linear(0.1)),
+    ));
+    commands.spawn((
+        OwlBoss,
+        SceneRoot(asset_server.load("models/owllowpoly.glb#Scene0")),
+        Transform::from_xyz(5.0, 0.0, 0.0),
+        GlobalTransform::default(),
+        WindWakerShaderBuilder::default()
+            .time_of_day(TimeOfDay::Day)
+            .weather(Weather::Sunny)
+            .build(),
         AudioPlayer::new(
         asset_server.load("sounds/owl_ap.ogg")
         ),
-        PlaybackSettings::LOOP.with_volume(Volume::Linear(0.3)),
+        PlaybackSettings::LOOP.with_volume(Volume::Linear(0.1)),
     ));
+}
+
+fn move_follow_bat(
+    bat_query: Query<&Transform, (With<Bat>, Without<OwlBoss>)>,
+    mut owl_query: Query<&mut Transform, With<OwlBoss>>,
+) {
+    let Ok(bat_transform) = bat_query.single() else {
+        return;
+    };
+
+    for mut owl_transform in &mut owl_query {
+        owl_transform.translation.y = bat_transform.translation.y;
+    }
 }
 
 fn move_owls(
     time: Res<Time>,
-    mut query: Query<&mut Transform, With<Owl>>,
+    mut query: Query<&mut Transform, With<OwlMinion>>,
     // asset_server: Res<AssetServer>,
     // mut commands: Commands,
 ) {
@@ -102,7 +132,7 @@ fn move_owls(
 
 fn despawn_owls(
     mut commands: Commands,
-    query: Query<(Entity, &Transform), With<Owl>>,
+    query: Query<(Entity, &Transform), With<OwlMinion>>,
 ) {
     for (entity, transform) in &query {
         if transform.translation.x < OWL_DESPAWN_X {
@@ -112,7 +142,7 @@ fn despawn_owls(
 }
 
 fn check_collision(
-    owl_query: Query<(Entity, &Transform), With<Owl>>,
+    owl_query: Query<(Entity, &Transform), With<OwlMinion>>,
     bat_query: Query<&Transform, With<Bat>>,
     heartsui_query: Query<Entity, With<HeartsUi>>,
     mut score: ResMut<Score>,
