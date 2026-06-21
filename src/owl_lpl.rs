@@ -9,7 +9,7 @@ use crate::bat_lpl::{Bat, AnimationToPlay};
 use crate::heart_lpl::HeartsUi;
 
 const OWL_SPAWN_X: f32 = 10.0;
-const OWL_SPAWN_SECS: f32 = 5.0;
+const OWL_SPAWN_SECS: f32 = 3.0;
 const OWL_SPEED: f32 = 9.0;
 const OWL_DESPAWN_X: f32 = -10.0;
 
@@ -30,13 +30,14 @@ impl Plugin for OwlPlugin {
                 OWL_SPAWN_SECS,
                 TimerMode::Repeating,
             )))
+            .add_systems(OnEnter(LevelState::Level1),spawn_owl_boss,)
             .add_systems(
                 Update,
                 (
                     check_collision,
-                    spawn_owl,
-                    //move_owls,
-                    move_follow_bat,
+                    spawn_owl_minion,
+                    owl_minion_move,
+                    owl_boss_move,
                     despawn_owls,
                 )
                 //.chain()
@@ -46,7 +47,7 @@ impl Plugin for OwlPlugin {
     }
 }
 
-fn spawn_owl(
+fn spawn_owl_minion(
     time: Res<Time>,
     mut timer: ResMut<OwlSpawnTimer>,
     mut commands: Commands,
@@ -87,10 +88,27 @@ fn spawn_owl(
         // ),
         // PlaybackSettings::LOOP.with_volume(Volume::Linear(0.1)),
     ));
+    
+}
+fn spawn_owl_boss(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut graphs: ResMut<Assets<AnimationGraph>>,
+){
+    let clip = asset_server.load("models/owllowpoly.glb#Animation1");
+    let mut graph = AnimationGraph::new();
+    let index = graph.add_clip(clip, 1.0, graph.root);
+    let graph_handle = graphs.add(graph);
+    commands.insert_resource(AnimationToPlay {
+        graph: graph_handle,
+        index,
+    });
+
     commands.spawn((
         OwlBoss,
         SceneRoot(asset_server.load("models/owllowpoly.glb#Scene0")),
-        Transform::from_xyz(5.0, 0.0, 0.0),
+        Transform::from_xyz(5.0, 0.0, 0.0)
+        .with_rotation(Quat::from_rotation_y(-std::f32::consts::FRAC_PI_2)),
         GlobalTransform::default(),
         WindWakerShaderBuilder::default()
             .time_of_day(TimeOfDay::Day)
@@ -98,14 +116,15 @@ fn spawn_owl(
             .build(),
         AudioPlayer::new(
         asset_server.load("sounds/owl_ap.ogg")
-        ),
-        PlaybackSettings::LOOP.with_volume(Volume::Linear(0.1)),
+        ),PlaybackSettings::LOOP.with_volume(Volume::Linear(0.1))
     ));
-}
 
-fn move_follow_bat(
+}
+fn owl_boss_move(
     bat_query: Query<&Transform, (With<Bat>, Without<OwlBoss>)>,
     mut owl_query: Query<&mut Transform, With<OwlBoss>>,
+    // asset_server: Res<AssetServer>,
+    // mut commands: Commands,
 ) {
     let Ok(bat_transform) = bat_query.single() else {
         return;
@@ -114,20 +133,19 @@ fn move_follow_bat(
     for mut owl_transform in &mut owl_query {
         owl_transform.translation.y = bat_transform.translation.y;
     }
+
+    // commands.spawn(AudioPlayer::new(
+    // asset_server.load("sounds/owl_atk.ogg"),
+    // ));
 }
 
-fn move_owls(
+fn owl_minion_move(
     time: Res<Time>,
     mut query: Query<&mut Transform, With<OwlMinion>>,
-    // asset_server: Res<AssetServer>,
-    // mut commands: Commands,
 ) {
     for mut transform in &mut query {
         transform.translation.x -= OWL_SPEED * time.delta_secs();
     }
-    // commands.spawn(AudioPlayer::new(
-    // asset_server.load("sounds/owl_atk.ogg"),
-    // ));
 }
 
 fn despawn_owls(
