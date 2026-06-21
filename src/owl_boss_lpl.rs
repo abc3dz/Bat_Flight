@@ -2,10 +2,9 @@ use bevy::prelude::*;
 use bevy_wind_waker_shader::prelude::*;
 use bevy::audio::Volume;
 
-use crate::{GameState, LevelState, score};
+use crate::{GameState, LevelState};
 use crate::score::Score;
 use crate::bat_lpl::{Bat, AnimationToPlay};
-use crate::heart_lpl::{HeartsContainer, HeartsUi};
 
 #[derive(Component)]
 pub struct OwlBoss;
@@ -32,6 +31,7 @@ impl Plugin for OwlBossPlugin {
                 Update,
                 (
                     check_collision,
+                    update_boss_hp_bar,
                     owl_boss_move,
                 )
                 //.chain()
@@ -45,7 +45,6 @@ fn spawn_owl_boss(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut graphs: ResMut<Assets<AnimationGraph>>,
-    score: Res<Score>
 ){
     let clip = asset_server.load("models/owllowpoly.glb#Animation1");
     let mut graph = AnimationGraph::new();
@@ -58,13 +57,17 @@ fn spawn_owl_boss(
 
     commands.spawn((
         OwlBoss,
+        OwlBossHp {
+            current: 10,
+            max: 10,
+        },
         SceneRoot(asset_server.load("models/owllowpoly.glb#Scene0")),
         Transform::from_xyz(5.0, 0.0, 0.0)
         .with_rotation(Quat::from_rotation_y(-std::f32::consts::FRAC_PI_2)),
         GlobalTransform::default(),
         WindWakerShaderBuilder::default()
-            .time_of_day(TimeOfDay::Day)
-            .weather(Weather::Sunny)
+            .time_of_day(TimeOfDay::Night)
+            .weather(Weather::Rainy)
             .build(),
         AudioPlayer::new(
         asset_server.load("sounds/owl_ap.ogg")
@@ -76,7 +79,7 @@ fn spawn_owl_boss(
         Node {
             position_type: PositionType::Absolute,
             top: px(20.0),
-            left: Val::Percent(25.0),
+            right: px(25.0),
             width: px(500.0),
             height: px(30.0),
             ..default()
@@ -112,7 +115,7 @@ fn owl_boss_move(
 fn check_collision(
     owl_query: Query<(Entity, &Transform), With<OwlBoss>>,
     bat_query: Query<&Transform, With<Bat>>,
-    heartsui_query: Query<Entity, With<HeartsUi>>,
+    
     mut score: ResMut<Score>,
     mut commands: Commands,
     mut next: ResMut<NextState<GameState>>,
@@ -134,12 +137,26 @@ fn check_collision(
             }
             commands.entity(entity).despawn();
             
-            for heart_entity in heartsui_query {
-                commands.entity(heart_entity).despawn();
-            }
             commands.spawn(AudioPlayer::new(
             asset_server.load("sounds/owl_atk.ogg"),
             ));
         }
     }
+}
+fn update_boss_hp_bar(
+    boss_query: Query<&OwlBossHp>,
+    mut fill_query: Query<&mut Node, With<BossHpFill>>,
+) {
+    let Ok(hp) = boss_query.single() else {
+        return;
+    };
+
+    let percent =
+        hp.current as f32 / hp.max as f32 * 100.0;
+
+    let Ok(mut node) = fill_query.single_mut() else {
+        return;
+    };
+
+    node.width = Val::Percent(percent);
 }

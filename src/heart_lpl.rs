@@ -8,7 +8,7 @@ use crate::bat_lpl::Bat;
 use crate::pillar_lpl::pillar_levels;
 
 const HEART_SPAWN_X: f32 = 10.0;
-const HEART_SPAWN_SECS: f32 = 3.0;
+const HEART_SPAWN_SECS: f32 = 5.0;
 const HEART_SPEED: f32 = 2.0;
 const HEART_DESPAWN_X: f32 = -10.0;
 
