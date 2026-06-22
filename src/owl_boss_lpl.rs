@@ -4,11 +4,16 @@ use bevy::audio::Volume;
 
 use crate::{GameState, LevelState};
 use crate::score::Score;
-use crate::bat_lpl::{Bat, AnimationToPlay};
 
 #[derive(Component)]
 pub struct OwlBoss{
     pub direction: f32,
+}
+
+#[derive(Resource)]
+pub struct OwlBossAnimPlayer {
+    pub graph: Handle<AnimationGraph>,
+    pub index: AnimationNodeIndex,
 }
 
 #[derive(Component)]
@@ -33,6 +38,7 @@ impl Plugin for OwlBossPlugin {
                 Update,
                 (
                     update_boss_hp_bar,
+                    play_owl_anim,
                     owl_boss_move,
                 )
                 //.chain()
@@ -51,7 +57,7 @@ fn spawn_owl_boss(
     let mut graph = AnimationGraph::new();
     let index = graph.add_clip(clip, 1.0, graph.root);
     let graph_handle = graphs.add(graph);
-    commands.insert_resource(AnimationToPlay {
+    commands.insert_resource(OwlBossAnimPlayer {
         graph: graph_handle,
         index,
     });
@@ -66,7 +72,8 @@ fn spawn_owl_boss(
         },
         SceneRoot(asset_server.load("models/owllowpoly.glb#Scene0")),
         Transform::from_xyz(5.0, 0.0, 0.0)
-        .with_rotation(Quat::from_rotation_y(-std::f32::consts::FRAC_PI_2)),
+        .with_rotation(Quat::from_rotation_y(-std::f32::consts::FRAC_PI_2))
+        .with_scale(Vec3::splat(2.0)),
         GlobalTransform::default(),
         WindWakerShaderBuilder::default()
             .time_of_day(TimeOfDay::Night)
@@ -139,4 +146,15 @@ fn update_boss_hp_bar(
     };
 
     node.width = Val::Percent(percent);
+}
+
+fn play_owl_anim(
+    mut commands: Commands,
+    mut players: Query<(Entity, &mut AnimationPlayer), Added<AnimationPlayer>>,
+    anim: Res<OwlBossAnimPlayer>,
+) {
+    for (entity, mut player) in &mut players {
+        commands.entity(entity).insert(AnimationGraphHandle(anim.graph.clone()));
+        player.play(anim.index).repeat();
+    }
 }

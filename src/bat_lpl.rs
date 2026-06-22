@@ -12,7 +12,7 @@ pub struct Bat {
 }
 
 #[derive(Resource)]
-pub struct AnimationToPlay {
+pub struct BatAnimationToPlay {
     pub graph: Handle<AnimationGraph>,
     pub index: AnimationNodeIndex,
 }
@@ -28,7 +28,7 @@ impl Plugin for BatPlugin {
             play_animation_when_ready,
             bat_input,
             bat_physics,
-        ).chain().run_if(in_state(GameState::Playing)))
+        ).run_if(in_state(GameState::Playing)))
         .add_systems(OnEnter(GameState::GameOver), cleanup_bat)
         .add_systems(OnEnter(GameState::Playing), spawn_bat);
     }
@@ -43,7 +43,7 @@ fn spawn_bat(
         let mut graph = AnimationGraph::new();
         let index = graph.add_clip(clip, 1.0, graph.root);
         let graph_handle = graphs.add(graph);
-        commands.insert_resource(AnimationToPlay {
+        commands.insert_resource(BatAnimationToPlay {
             graph: graph_handle,
             index,
         });
@@ -108,10 +108,10 @@ fn bat_physics(
     }
 }
 
-fn play_animation_when_ready(
+pub fn play_animation_when_ready(
     mut commands: Commands,
     mut players: Query<(Entity, &mut AnimationPlayer), Added<AnimationPlayer>>,
-    anim: Res<AnimationToPlay>,
+    anim: Res<BatAnimationToPlay>,
 ) {
     for (entity, mut player) in &mut players {
         commands.entity(entity).insert(AnimationGraphHandle(anim.graph.clone()));
