@@ -7,7 +7,9 @@ use crate::score::Score;
 use crate::bat_lpl::{Bat, AnimationToPlay};
 
 #[derive(Component)]
-pub struct OwlBoss;
+pub struct OwlBoss{
+    pub direction: f32,
+}
 
 #[derive(Component)]
 pub struct BossHpBar;
@@ -26,11 +28,10 @@ pub struct OwlBossPlugin;
 impl Plugin for OwlBossPlugin {
     fn build(&self, app: &mut App) {
         app
-            .add_systems(OnEnter(LevelState::Level1),spawn_owl_boss,)
+            .add_systems(OnEnter(GameState::Playing),spawn_owl_boss,)
             .add_systems(
                 Update,
                 (
-                    check_collision,
                     update_boss_hp_bar,
                     owl_boss_move,
                 )
@@ -56,7 +57,9 @@ fn spawn_owl_boss(
     });
 
     commands.spawn((
-        OwlBoss,
+        OwlBoss{
+            direction: 1.0
+        },
         OwlBossHp {
             current: 10,
             max: 10,
@@ -71,7 +74,7 @@ fn spawn_owl_boss(
             .build(),
         AudioPlayer::new(
         asset_server.load("sounds/owl_ap.ogg")
-        ),PlaybackSettings::LOOP.with_volume(Volume::Linear(0.1))
+        ),PlaybackSettings::LOOP.with_volume(Volume::Linear(0.01))
     ));
 
     commands.spawn((
@@ -94,55 +97,32 @@ fn spawn_owl_boss(
                 height: Val::Percent(100.0),
                 ..default()
             },
-            BackgroundColor(Color::srgb(0.0, 1.0, 0.0)),
+            BackgroundColor(Color::srgb(0.55, 0.27, 0.07))
         ));
     });
 }
 
 fn owl_boss_move(
-    bat_query: Query<&Transform, (With<Bat>, Without<OwlBoss>)>,
-    mut owl_query: Query<&mut Transform, With<OwlBoss>>,
+    time: Res<Time>,
+    mut owl_query: Query<(&mut Transform, &mut OwlBoss)>,
 ) {
-    let Ok(bat_transform) = bat_query.single() else {
-        return;
-    };
+    for (mut transform, mut owl) in &mut owl_query {
 
-    for mut owl_transform in &mut owl_query {
-        owl_transform.translation.y = bat_transform.translation.y;
-    }
-}
+        let speed = 3.0;
 
-fn check_collision(
-    owl_query: Query<(Entity, &Transform), With<OwlBoss>>,
-    bat_query: Query<&Transform, With<Bat>>,
-    
-    mut score: ResMut<Score>,
-    mut commands: Commands,
-    mut next: ResMut<NextState<GameState>>,
-    asset_server: Res<AssetServer>,
-){
-    let Ok(bat_t) = bat_query.single() else { return };
-    for (entity, owl_transform) in &owl_query {
-        let distance = bat_t
-            .translation
-            .distance(owl_transform.translation);
-        if distance < 1.0 {
-            score.owl += 1;
-            if score.heart <= 1 {
-                score.heart = 3;
-                next.set(GameState::GameOver);
-            }else{
-                score.coin -= 1;
-                score.heart -= 1;
-            }
-            commands.entity(entity).despawn();
-            
-            commands.spawn(AudioPlayer::new(
-            asset_server.load("sounds/owl_atk.ogg"),
-            ));
+        transform.translation.y +=
+            owl.direction * speed * time.delta_secs();
+
+        if transform.translation.y > 4.0 {
+            owl.direction = -1.0;
+        }
+
+        if transform.translation.y < -4.0 {
+            owl.direction = 1.0;
         }
     }
 }
+
 fn update_boss_hp_bar(
     boss_query: Query<&OwlBossHp>,
     mut fill_query: Query<&mut Node, With<BossHpFill>>,
