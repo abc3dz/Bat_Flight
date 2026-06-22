@@ -10,8 +10,10 @@ pub struct OwlBoss{
     pub direction: f32,
 }
 
+#[derive(Component)] pub struct OwlBossTag;
+
 #[derive(Resource)]
-pub struct OwlBossAnimPlayer {
+pub struct OwlBossAnim {
     pub graph: Handle<AnimationGraph>,
     pub index: AnimationNodeIndex,
 }
@@ -60,7 +62,7 @@ fn spawn_owl_boss(
     let mut graph = AnimationGraph::new();
     let index = graph.add_clip(clip, 1.0, graph.root);
     let graph_handle = graphs.add(graph);
-    commands.insert_resource(OwlBossAnimPlayer {
+    commands.insert_resource(OwlBossAnim {
         graph: graph_handle,
         index,
     });
@@ -84,7 +86,8 @@ fn spawn_owl_boss(
             .build(),
         AudioPlayer::new(
         asset_server.load("sounds/owl_ap.ogg")
-        ),PlaybackSettings::LOOP.with_volume(Volume::Linear(0.01))
+        ),PlaybackSettings::LOOP.with_volume(Volume::Linear(0.01)),
+        OwlBossTag
     ));
 
     commands.spawn((
@@ -154,21 +157,45 @@ fn update_boss_hp_bar(
 fn play_owl_anim(
     mut commands: Commands,
     mut players: Query<(Entity, &mut AnimationPlayer), Added<AnimationPlayer>>,
-    anim: Res<OwlBossAnimPlayer>,
+    parents: Query<&ChildOf>,
+    owl_roots: Query<Entity, With<OwlBoss>>,
+    anim: Res<OwlBossAnim>,
 ) {
     for (entity, mut player) in &mut players {
-        commands.entity(entity).insert(AnimationGraphHandle(anim.graph.clone()));
+        let mut current = entity;
+        let mut is_owl_child = false;
+
+        while let Ok(parent) = parents.get(current) {
+            let parent_entity = parent.parent();
+
+            if owl_roots.get(parent_entity).is_ok() {
+                is_owl_child = true;
+                break;
+            }
+
+            current = parent_entity;
+        }
+
+        if !is_owl_child {
+            continue;
+        }
+
+        commands
+            .entity(entity)
+            .insert(AnimationGraphHandle(anim.graph.clone()));
+
         player.play(anim.index).repeat();
     }
 }
+
 fn debug_level5(
     keys: Res<ButtonInput<KeyCode>>,
-    mut next_level_state: ResMut<NextState<LevelState>>,
+    //mut next_level_state: ResMut<NextState<LevelState>>,
     mut score: ResMut<Score>,
 ) {
     if keys.just_pressed(KeyCode::KeyZ) {
-        score.coin = 40;
-        next_level_state.set(LevelState::Level5);
+        score.coin += 10;
+        //next_level_state.set(LevelState::Level5);
     }
 }
 fn test_hp_owl_boss(

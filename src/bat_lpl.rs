@@ -12,6 +12,8 @@ pub struct Bat {
     pub velocity_y: f32,
 }
 
+#[derive(Component)] pub struct BatTag;
+
 #[derive(Resource)]
 pub struct BatAnimationToPlay {
     pub graph: Handle<AnimationGraph>,
@@ -61,6 +63,7 @@ fn spawn_bat(
             Visibility::Visible,
             InheritedVisibility::default(),
             Bat { velocity_y: 5.0 },
+            BatTag
         ));
 }
 
@@ -113,7 +116,7 @@ fn bat_physics(
 
 pub fn play_animation_when_ready(
     mut commands: Commands,
-    mut players: Query<(Entity, &mut AnimationPlayer), Added<AnimationPlayer>>,
+    mut players: Query<(Entity, &mut AnimationPlayer), Without<AnimationGraphHandle>>,
     anim: Res<BatAnimationToPlay>,
 ) {
     for (entity, mut player) in &mut players {
