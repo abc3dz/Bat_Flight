@@ -10,6 +10,7 @@ pub struct Score {
     pub pillar: u32,
     pub gear: u32,
     pub owl: u32,
+    pub game_over: u32,
 }
 impl Default for Score {
     fn default() -> Self {
@@ -18,7 +19,8 @@ impl Default for Score {
             heart: 3,
             pillar: 0,
             gear: 0,
-            owl: 0
+            owl: 0,
+            game_over: 0
         }
     }
 }

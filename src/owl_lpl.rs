@@ -4,7 +4,7 @@ use rand::Rng;
 
 use crate::{GameState, LevelState};
 use crate::score::Score;
-use crate::bat_lpl::{Bat, AnimationToPlay};
+use crate::bat_lpl::{Bat, BatAnimationToPlay};
 use crate::heart_lpl::HeartsUi;
 
 const OWL_SPAWN_X: f32 = 10.0;
@@ -63,7 +63,7 @@ fn spawn_owl_minion(
     let mut graph = AnimationGraph::new();
     let index = graph.add_clip(clip, 1.0, graph.root);
     let graph_handle = graphs.add(graph);
-    commands.insert_resource(AnimationToPlay {
+    commands.insert_resource(BatAnimationToPlay {
         graph: graph_handle,
         index,
     });
@@ -83,7 +83,6 @@ fn spawn_owl_minion(
         // ),
         // PlaybackSettings::LOOP.with_volume(Volume::Linear(0.1)),
     ));
-    
 }
 
 fn owl_minion_move(

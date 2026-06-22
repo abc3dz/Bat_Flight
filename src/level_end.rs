@@ -50,7 +50,8 @@ fn spawn_ending_text(
         Hearts Collected: {}\n\
         Pillars Hit: {}\n\
         Gears Hit: {}\n\
-        Owls Hit: {}",
+        Owls Hit: {}\n\
+        Game Over: {}",
         minutes,
         seconds,
         score.coin,
@@ -58,6 +59,7 @@ fn spawn_ending_text(
         score.pillar,
         score.gear,
         score.owl,
+        score.game_over
     );
     
     commands.spawn((

@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy_wind_waker_shader::prelude::*;
 
 use crate::GameState;
+use crate::score::Score;
 
 const GRAVITY:    f32 = -12.0;
 const FLAP_FORCE: f32 =  6.0;
@@ -95,11 +96,13 @@ fn bat_physics(
     mut next: ResMut<NextState<GameState>>,
     asset_server: Res<AssetServer>,
     mut commands: Commands,
+    mut score: ResMut<Score>
 ) {
     for (mut bat, mut transform) in &mut query {
         bat.velocity_y += GRAVITY * time.delta_secs();
         transform.translation.y += bat.velocity_y * time.delta_secs();
         if transform.translation.y < -5.0 {
+            score.game_over += 1;
             commands.spawn(AudioPlayer::new(
                 asset_server.load("sounds/game_over.ogg"),
             ));
