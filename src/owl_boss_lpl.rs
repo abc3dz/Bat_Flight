@@ -33,17 +33,20 @@ pub struct OwlBossPlugin;
 impl Plugin for OwlBossPlugin {
     fn build(&self, app: &mut App) {
         app
-            .add_systems(OnEnter(GameState::Playing),spawn_owl_boss,)
+            .add_systems(OnEnter(LevelState::Level5),spawn_owl_boss,)
+            .add_systems(Update, debug_level5)
             .add_systems(
                 Update,
                 (
+                    //spawn_owl_boss,
                     update_boss_hp_bar,
                     play_owl_anim,
                     owl_boss_move,
+                    test_hp_owl_boss,
                 )
                 //.chain()
                 .run_if(in_state(GameState::Playing))
-                .run_if(in_state(LevelState::Level1))
+                .run_if(in_state(LevelState::Level5))
         );
     }
 }   
@@ -156,5 +159,30 @@ fn play_owl_anim(
     for (entity, mut player) in &mut players {
         commands.entity(entity).insert(AnimationGraphHandle(anim.graph.clone()));
         player.play(anim.index).repeat();
+    }
+}
+fn debug_level5(
+    keys: Res<ButtonInput<KeyCode>>,
+    mut next_level_state: ResMut<NextState<LevelState>>,
+    mut score: ResMut<Score>,
+) {
+    if keys.just_pressed(KeyCode::KeyZ) {
+        score.coin = 40;
+        next_level_state.set(LevelState::Level5);
+    }
+}
+fn test_hp_owl_boss(
+    keyboard: Res<ButtonInput<KeyCode>>,
+    mut boss_query: Query<&mut OwlBossHp>,
+) {
+    if keyboard.just_pressed(KeyCode::KeyA) {
+
+        let Ok(mut hp) = boss_query.single_mut() else {
+            return;
+        };
+
+        hp.current = hp.current.saturating_sub(2);
+
+        println!("Boss HP: {}", hp.current);
     }
 }

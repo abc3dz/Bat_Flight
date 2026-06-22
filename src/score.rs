@@ -106,6 +106,11 @@ fn check_level_progress(
         next_level.set(LevelState::Level4);
     }
     if *level_state.get() == LevelState::Level4
+        && score.coin >= 40
+    {
+        next_level.set(LevelState::Level5);
+    }
+    if *level_state.get() == LevelState::Level5
         && score.coin >= 50
     {
         next_level.set(LevelState::LevelEnd);

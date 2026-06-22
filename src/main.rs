@@ -52,6 +52,7 @@ pub enum LevelState {
     Level2,
     Level3,
     Level4,
+    Level5,
     LevelEnd
 }
 
