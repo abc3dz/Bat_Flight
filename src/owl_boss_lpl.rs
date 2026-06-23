@@ -4,6 +4,7 @@ use bevy::audio::Volume;
 
 use crate::{GameState, LevelState};
 use crate::score::Score;
+use crate::bat_lpl::BatLaser;
 
 #[derive(Component)]
 pub struct OwlBoss{
@@ -100,7 +101,7 @@ fn spawn_owl_boss(
             height: px(30.0),
             ..default()
         },
-        BackgroundColor(Color::BLACK),
+        BackgroundColor(Color::WHITE),
     ))
     .with_children(|parent| {
         parent.spawn((
@@ -211,5 +212,40 @@ fn test_hp_owl_boss(
         hp.current = hp.current.saturating_sub(2);
 
         println!("Boss HP: {}", hp.current);
+    }
+}
+
+fn check_collision(
+    owl_query: Query<(Entity, &Transform), With<OwlBoss>>,
+    bat_laser: Query<&Transform, With<BatLaser>>,
+    mut owl_boss_hp: ResMut<OwlBossHp>,
+    
+    commands: Commands,
+    mut next: ResMut<NextState<GameState>>,
+    //asset_server: Res<AssetServer>,
+){
+    let Ok(bat_laser) = bat_laser.single() else { return };
+    for (entity, owl_transform) in &owl_query {
+        let distance = bat_t
+            .translation
+            .distance(owl_transform.translation);
+        if distance < 1.0 {
+            score.owl += 1;
+            if score.heart <= 1 {
+                score.heart = 3;
+                next.set(GameState::GameOver);
+            }else{
+                score.coin -= 1;
+                score.heart -= 1;
+            }
+            commands.entity(entity).despawn();
+            
+            for heart_entity in heartsui_query {
+                commands.entity(heart_entity).despawn();
+            }
+            commands.spawn(AudioPlayer::new(
+            asset_server.load("sounds/owl_atk.ogg"),
+            ));
+        }
     }
 }

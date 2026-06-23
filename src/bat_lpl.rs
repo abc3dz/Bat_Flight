@@ -12,7 +12,12 @@ pub struct Bat {
     pub velocity_y: f32,
 }
 
-#[derive(Component)] pub struct BatTag;
+#[derive(Component)]
+pub struct BatLaser {
+    pub speed: f32,
+    pub radius: f32,
+    pub half_length: f32,
+}
 
 #[derive(Resource)]
 pub struct BatAnimationToPlay {
@@ -31,6 +36,7 @@ impl Plugin for BatPlugin {
             play_animation_when_ready,
             bat_input,
             bat_physics,
+            move_bat_laser,
         ).run_if(in_state(GameState::Playing)))
         .add_systems(OnEnter(GameState::GameOver), cleanup_bat)
         .add_systems(OnEnter(GameState::Playing), spawn_bat);
@@ -62,8 +68,7 @@ fn spawn_bat(
             GlobalTransform::default(),
             Visibility::Visible,
             InheritedVisibility::default(),
-            Bat { velocity_y: 5.0 },
-            BatTag
+            Bat { velocity_y: 5.0 }
         ));
 }
 
@@ -72,9 +77,11 @@ fn bat_input(
     mouse:    Res<ButtonInput<MouseButton>>,
     touches:  Res<Touches>,
     mut query: Query<&mut Bat>,
-    mut morph_query: Query<&mut MorphWeights>,
+    bat_transform: Query<&Transform, With<Bat>>,
     mut commands: Commands,        
     asset_server: Res<AssetServer>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     let flapped = keyboard.just_pressed(KeyCode::Space)
         || mouse.just_pressed(MouseButton::Left)
@@ -84,12 +91,57 @@ fn bat_input(
         for mut bat in &mut query {
             bat.velocity_y = FLAP_FORCE;
         }
-        for mut weights in &mut morph_query {
-            weights.weights_mut()[0] = 1.0; // index 0 = shape key "fly"
-        }
+        
         commands.spawn(AudioPlayer::new(
             asset_server.load("sounds/fly.ogg"),
         ));
+    }
+
+    if keyboard.just_pressed(KeyCode::KeyS) {
+        if let Ok(bat_transform) = bat_transform.single() {
+            
+            // กำหนดขนาดของ Cylinder แนวนอน
+            let radius = 0.3;
+            let length = 3.0;
+
+            // สร้าง Mesh Cylinder (ปกติจะเป็นแนวตั้ง)
+            let cylinder_mesh = Cylinder::new(radius, length);
+
+            // หมุนให้เป็นแนวนอน (หมุนรอบแกน X 90 องศา เพื่อให้ทอดไปตามแกน Z)
+            let horizontal_rotation = Quat::from_rotation_x(90.0);
+
+            commands.spawn((
+                BatLaser {
+                    speed: 15.0, // ความเร็วในการวิ่ง
+                    radius,
+                    half_length: length / 2.0,
+                },
+                Mesh3d(meshes.add(cylinder_mesh)),
+                MeshMaterial3d(materials.add(Color::from(LinearRgba::BLUE))), // พลังสีน้ำเงิน
+                Transform {
+                    // ปล่อยออกจากตำแหน่งค้างคาว
+                    translation: bat_transform.translation, 
+                    // หมุนตัวตัววัตถุให้เป็นแนวนอน
+                    rotation: horizontal_rotation, 
+                    ..default()
+                }
+            ));
+        }
+    }
+}
+
+pub fn move_bat_laser(
+    mut commands: Commands,
+    time: Res<Time>,
+    mut laser_query: Query<(Entity, &mut Transform, &BatLaser)>,
+) {
+    for (entity, mut transform, laser) in &mut laser_query {
+        //transform.rotate_y(time.delta_secs());
+        transform.translation.x += laser.speed * time.delta_secs();
+
+        if transform.translation.x > 50.0 {
+            commands.entity(entity).despawn();
+        }
     }
 }
 
