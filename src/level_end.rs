@@ -4,6 +4,7 @@ use crate::LevelState;
 use crate::bat_lpl::Bat;
 use crate::coin_lpl::Coin;
 use crate::owl_lpl::OwlMinion;
+use crate::owl_boss_lpl::{OwlBoss,BossHpBar,BossHpFill};
 use crate::pillar_lpl::Pillar;
 use crate::gear_lpl::Gear;
 use crate::score::Score;
@@ -120,7 +121,10 @@ fn cleanup_game(
     gear_query: Query<Entity, With<Gear>>,
     heart_query: Query<Entity, With<Heart>>,
     heartsui_query: Query<Entity, With<HeartsUi>>,
-    owl_query: Query<Entity, With<OwlMinion>>
+    owl_query: Query<Entity, With<OwlMinion>>,
+    owl_boss_query: Query<Entity, With<OwlBoss>>,
+    boss_hp_bar_query: Query<Entity, With<BossHpBar>>,
+    boss_hp_fill_query: Query<Entity, With<BossHpFill>>,
 ) {
     for entity in &bat_query {
         commands.entity(entity).despawn();
@@ -141,6 +145,16 @@ fn cleanup_game(
         commands.entity(entity).despawn();
     }
     for entity in owl_query {
+        commands.entity(entity).despawn();
+    }
+    for entity in owl_boss_query {
+        commands.entity(entity).despawn();
+    }
+    for entity in &boss_hp_fill_query {
+        commands.entity(entity).despawn();
+    }
+
+    for entity in &boss_hp_bar_query {
         commands.entity(entity).despawn();
     }
 }
