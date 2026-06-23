@@ -4,14 +4,12 @@ use bevy::audio::Volume;
 
 use crate::{GameState, LevelState};
 use crate::score::Score;
-use crate::bat_lpl::BatLaser;
+use crate::bat_lpl::BatProjectile;
 
 #[derive(Component)]
 pub struct OwlBoss{
     pub direction: f32,
 }
-
-#[derive(Component)] pub struct OwlBossTag;
 
 #[derive(Resource)]
 pub struct OwlBossAnim {
@@ -46,6 +44,7 @@ impl Plugin for OwlBossPlugin {
                     play_owl_anim,
                     owl_boss_move,
                     test_hp_owl_boss,
+                    projectile_hit_boss,
                 )
                 //.chain()
                 .run_if(in_state(GameState::Playing))
@@ -88,7 +87,6 @@ fn spawn_owl_boss(
         AudioPlayer::new(
         asset_server.load("sounds/owl_ap.ogg")
         ),PlaybackSettings::LOOP.with_volume(Volume::Linear(0.01)),
-        OwlBossTag
     ));
 
     commands.spawn((
@@ -209,43 +207,52 @@ fn test_hp_owl_boss(
             return;
         };
 
-        hp.current = hp.current.saturating_sub(2);
+        hp.current -= 2;
 
         println!("Boss HP: {}", hp.current);
     }
 }
 
-fn check_collision(
-    owl_query: Query<(Entity, &Transform), With<OwlBoss>>,
-    bat_laser: Query<&Transform, With<BatLaser>>,
-    mut owl_boss_hp: ResMut<OwlBossHp>,
+fn projectile_hit_boss(
+    mut commands: Commands,
+    projectile_query: Query<(Entity, &Transform),With<BatProjectile>>,
+    mut boss_query: Query<(Entity, &Transform, &mut OwlBossHp), With<OwlBoss>>,
+) {
+
+    let Ok((boss_entity, boss_transform, mut hp)) = boss_query.single_mut()
+    else {
+        return;
+    };
     
-    commands: Commands,
-    mut next: ResMut<NextState<GameState>>,
-    //asset_server: Res<AssetServer>,
-){
-    let Ok(bat_laser) = bat_laser.single() else { return };
-    for (entity, owl_transform) in &owl_query {
-        let distance = bat_t
+
+    for (projectile_entity,
+        projectile_transform)
+        in &projectile_query
+    {
+        let distance =
+            projectile_transform
             .translation
-            .distance(owl_transform.translation);
-        if distance < 1.0 {
-            score.owl += 1;
-            if score.heart <= 1 {
-                score.heart = 3;
-                next.set(GameState::GameOver);
-            }else{
-                score.coin -= 1;
-                score.heart -= 1;
+            .distance(
+                boss_transform.translation
+            );
+
+        if distance < 1.5 {
+
+            hp.current -= 2;
+
+            commands
+                .entity(projectile_entity)
+                .despawn();
+
+            println!("Boss HP: {}",hp.current);
+
+            if hp.current == 0 {
+
+                println!("Boss Defeated");
+
+                commands.entity(boss_entity).despawn();
+                
             }
-            commands.entity(entity).despawn();
-            
-            for heart_entity in heartsui_query {
-                commands.entity(heart_entity).despawn();
-            }
-            commands.spawn(AudioPlayer::new(
-            asset_server.load("sounds/owl_atk.ogg"),
-            ));
         }
     }
 }

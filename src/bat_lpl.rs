@@ -13,11 +13,7 @@ pub struct Bat {
 }
 
 #[derive(Component)]
-pub struct BatLaser {
-    pub speed: f32,
-    pub radius: f32,
-    pub half_length: f32,
-}
+pub struct BatProjectile;
 
 #[derive(Resource)]
 pub struct BatAnimationToPlay {
@@ -36,7 +32,7 @@ impl Plugin for BatPlugin {
             play_animation_when_ready,
             bat_input,
             bat_physics,
-            move_bat_laser,
+            move_projectiles,
         ).run_if(in_state(GameState::Playing)))
         .add_systems(OnEnter(GameState::GameOver), cleanup_bat)
         .add_systems(OnEnter(GameState::Playing), spawn_bat);
@@ -100,48 +96,31 @@ fn bat_input(
     if keyboard.just_pressed(KeyCode::KeyS) {
         if let Ok(bat_transform) = bat_transform.single() {
             
-            // กำหนดขนาดของ Cylinder แนวนอน
-            let radius = 0.3;
-            let length = 3.0;
-
-            // สร้าง Mesh Cylinder (ปกติจะเป็นแนวตั้ง)
-            let cylinder_mesh = Cylinder::new(radius, length);
-
-            // หมุนให้เป็นแนวนอน (หมุนรอบแกน X 90 องศา เพื่อให้ทอดไปตามแกน Z)
-            let horizontal_rotation = Quat::from_rotation_x(90.0);
-
-            commands.spawn((
-                BatLaser {
-                    speed: 15.0, // ความเร็วในการวิ่ง
-                    radius,
-                    half_length: length / 2.0,
-                },
-                Mesh3d(meshes.add(cylinder_mesh)),
-                MeshMaterial3d(materials.add(Color::from(LinearRgba::BLUE))), // พลังสีน้ำเงิน
-                Transform {
-                    // ปล่อยออกจากตำแหน่งค้างคาว
-                    translation: bat_transform.translation, 
-                    // หมุนตัวตัววัตถุให้เป็นแนวนอน
-                    rotation: horizontal_rotation, 
-                    ..default()
-                }
+           commands.spawn((
+                BatProjectile,
+                Mesh3d(meshes.add(Sphere::new(0.3))),
+                MeshMaterial3d(materials.add(
+                    StandardMaterial {
+                        base_color: Color::srgb(0.4, 0.0, 0.6),
+                        emissive: LinearRgba::rgb(1.0, 0.0, 1.0),
+                        ..default()
+                    }
+                )),
+                Transform::from_translation(
+                    bat_transform.translation
+                ),
             ));
         }
     }
 }
 
-pub fn move_bat_laser(
-    mut commands: Commands,
+fn move_projectiles(
     time: Res<Time>,
-    mut laser_query: Query<(Entity, &mut Transform, &BatLaser)>,
+    mut query: Query<&mut Transform, With<BatProjectile>>,
 ) {
-    for (entity, mut transform, laser) in &mut laser_query {
-        //transform.rotate_y(time.delta_secs());
-        transform.translation.x += laser.speed * time.delta_secs();
-
-        if transform.translation.x > 50.0 {
-            commands.entity(entity).despawn();
-        }
+    for mut transform in &mut query {
+        transform.translation.x +=
+            8.0 * time.delta_secs();
     }
 }
 
