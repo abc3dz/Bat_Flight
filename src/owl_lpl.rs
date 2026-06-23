@@ -4,13 +4,8 @@ use rand::Rng;
 
 use crate::{GameState, LevelState};
 use crate::score::Score;
-use crate::bat_lpl::{Bat, BatAnimationToPlay};
+use crate::bat_lpl::{Bat, BatAnimationToPlay, BatProjectile};
 use crate::heart_lpl::HeartsUi;
-
-const OWL_SPAWN_X: f32 = 10.0;
-const OWL_SPAWN_SECS: f32 = 3.0;
-const OWL_SPEED: f32 = 9.0;
-const OWL_DESPAWN_X: f32 = -10.0;
 
 #[derive(Component)]
 pub struct OwlMinion;
@@ -18,13 +13,29 @@ pub struct OwlMinion;
 #[derive(Resource)]
 struct OwlSpawnTimer(Timer);
 
+#[derive(Resource)]
+pub struct OwlSettings {
+    pub spawn_x: f32,
+    pub spawn_sec: f32,
+    pub speed: f32,
+    pub despawn_x: f32,
+}
+
 pub struct OwlMinionPlugin;
 
 impl Plugin for OwlMinionPlugin {
     fn build(&self, app: &mut App) {
+        let owl_settings = OwlSettings {
+            spawn_x: 10.0,
+            spawn_sec: 3.0,
+            speed: 9.0,
+            despawn_x: -10.0,
+        };
+        let spawn_sec = owl_settings.spawn_sec;
         app
+            .insert_resource(owl_settings)
             .insert_resource(OwlSpawnTimer(Timer::from_seconds(
-                OWL_SPAWN_SECS,
+                spawn_sec,
                 TimerMode::Repeating,
             )))
             .add_systems(
@@ -47,6 +58,7 @@ fn spawn_owl_minion(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut graphs: ResMut<Assets<AnimationGraph>>,
+    settings: Res<OwlSettings>
 ) {
     timer.0.tick(time.delta());
 
@@ -70,7 +82,7 @@ fn spawn_owl_minion(
     commands.spawn((
         OwlMinion,
         SceneRoot(asset_server.load("models/owllowpoly.glb#Scene0")),
-        Transform::from_xyz(OWL_SPAWN_X, y, 0.0)
+        Transform::from_xyz(settings.spawn_x, y, 0.0)
         .with_rotation(Quat::from_rotation_y(-std::f32::consts::FRAC_PI_2)),
         GlobalTransform::default(),
         WindWakerShaderBuilder::default()
@@ -87,18 +99,20 @@ fn spawn_owl_minion(
 fn owl_minion_move(
     time: Res<Time>,
     mut query: Query<&mut Transform, With<OwlMinion>>,
+    settings: Res<OwlSettings>
 ) {
     for mut transform in &mut query {
-        transform.translation.x -= OWL_SPEED * time.delta_secs();
+        transform.translation.x -= settings.speed * time.delta_secs();
     }
 }
 
 fn despawn_owls(
     mut commands: Commands,
     query: Query<(Entity, &Transform), With<OwlMinion>>,
+    settings: Res<OwlSettings>
 ) {
     for (entity, transform) in &query {
-        if transform.translation.x < OWL_DESPAWN_X {
+        if transform.translation.x < settings.despawn_x {
             commands.entity(entity).despawn();
         }
     }
@@ -112,6 +126,7 @@ fn check_collision(
     mut commands: Commands,
     mut next: ResMut<NextState<GameState>>,
     asset_server: Res<AssetServer>,
+    projectile_query: Query<(Entity, &Transform),With<BatProjectile>>,
 ){
     let Ok(bat_t) = bat_query.single() else { return };
     for (entity, owl_transform) in &owl_query {
@@ -135,6 +150,20 @@ fn check_collision(
             commands.spawn(AudioPlayer::new(
             asset_server.load("sounds/owl_atk.ogg"),
             ));
+        }
+        for (projectile_entity,projectile_transform) in &projectile_query{
+            let distance =
+                projectile_transform
+                .translation
+                .distance(
+                    owl_transform.translation
+                );
+
+            if distance < 1.5 {
+
+                commands.entity(projectile_entity).despawn();
+                commands.entity(entity).despawn();
+            }
         }
     }
 }

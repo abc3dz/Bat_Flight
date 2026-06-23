@@ -4,7 +4,7 @@ use rand::Rng;
 
 use crate::{GameState, LevelState};
 use crate::score::Score;
-use crate::bat_lpl::Bat;
+use crate::bat_lpl::{Bat, BatProjectile};
 use crate::heart_lpl::HeartsUi;
 
 const GEAR_SPAWN_X: f32 = 10.0;
@@ -105,6 +105,7 @@ fn check_collision(
     mut commands: Commands,
     mut next: ResMut<NextState<GameState>>,
     asset_server: Res<AssetServer>,
+    projectile_query: Query<(Entity, &Transform),With<BatProjectile>>,
 ){
     let Ok(bat_t) = bat_query.single() else { return };
     for (entity, gear_transform) in &gear_query {
@@ -129,6 +130,20 @@ fn check_collision(
             asset_server.load("sounds/gear.ogg"),
             ));
         }
+        for (projectile_entity,projectile_transform) in &projectile_query{
+            let distance =
+                projectile_transform
+                .translation
+                .distance(
+                    gear_transform.translation
+                );
+
+            if distance < 1.5 {
+
+                commands.entity(projectile_entity).despawn();
+                commands.entity(entity).despawn();
+            }
+        }
     }
 }
 pub fn gear_levels(
@@ -136,6 +151,6 @@ pub fn gear_levels(
 ) -> bool {
     matches!(
         level_state.get(),
-        LevelState::Level3 | LevelState::Level4
+        LevelState::Level3 | LevelState::Level4 | LevelState::Level5
     )
 }

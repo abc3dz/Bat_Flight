@@ -78,6 +78,7 @@ fn bat_input(
     asset_server: Res<AssetServer>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut coin: ResMut<Score>
 ) {
     let flapped = keyboard.just_pressed(KeyCode::Space)
         || mouse.just_pressed(MouseButton::Left)
@@ -94,6 +95,11 @@ fn bat_input(
     }
 
     if keyboard.just_pressed(KeyCode::KeyS) {
+        if coin.coin <= 0{
+            return;
+        }else {
+            coin.coin = coin.coin.saturating_sub(2);
+        }
         if let Ok(bat_transform) = bat_transform.single() {
             
            commands.spawn((

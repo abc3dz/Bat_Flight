@@ -150,7 +150,7 @@ pub fn pillar_levels(
 ) -> bool {
     matches!(
         level_state.get(),
-        LevelState::Level2 | LevelState::Level3 | LevelState::Level4
+        LevelState::Level2 | LevelState::Level3 | LevelState::Level4 | LevelState::Level5
     )
 }
 fn setup_game_over(

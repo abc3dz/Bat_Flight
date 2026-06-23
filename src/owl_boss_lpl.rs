@@ -5,6 +5,7 @@ use bevy::audio::Volume;
 use crate::{GameState, LevelState};
 use crate::score::Score;
 use crate::bat_lpl::BatProjectile;
+use crate::owl_lpl::OwlSettings;
 
 #[derive(Component)]
 pub struct OwlBoss{
@@ -57,6 +58,7 @@ fn spawn_owl_boss(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut graphs: ResMut<Assets<AnimationGraph>>,
+    mut settings: ResMut<OwlSettings>
 ){
     let clip = asset_server.load("models/owllowpoly.glb#Animation1");
     let mut graph = AnimationGraph::new();
@@ -66,7 +68,7 @@ fn spawn_owl_boss(
         graph: graph_handle,
         index,
     });
-
+    settings.spawn_sec = 1.0;
     commands.spawn((
         OwlBoss{
             direction: 1.0
@@ -88,6 +90,7 @@ fn spawn_owl_boss(
         asset_server.load("sounds/owl_ap.ogg")
         ),PlaybackSettings::LOOP.with_volume(Volume::Linear(0.01)),
     ));
+
 
     commands.spawn((
         BossHpBar,
@@ -217,6 +220,7 @@ fn projectile_hit_boss(
     mut commands: Commands,
     projectile_query: Query<(Entity, &Transform),With<BatProjectile>>,
     mut boss_query: Query<(Entity, &Transform, &mut OwlBossHp), With<OwlBoss>>,
+    mut next_level_state: ResMut<NextState<LevelState>>,
 ) {
 
     let Ok((boss_entity, boss_transform, mut hp)) = boss_query.single_mut()
@@ -225,10 +229,7 @@ fn projectile_hit_boss(
     };
     
 
-    for (projectile_entity,
-        projectile_transform)
-        in &projectile_query
-    {
+    for (projectile_entity,projectile_transform) in &projectile_query{
         let distance =
             projectile_transform
             .translation
@@ -244,14 +245,9 @@ fn projectile_hit_boss(
                 .entity(projectile_entity)
                 .despawn();
 
-            println!("Boss HP: {}",hp.current);
-
             if hp.current == 0 {
-
-                println!("Boss Defeated");
-
                 commands.entity(boss_entity).despawn();
-                
+                next_level_state.set(LevelState::LevelEnd);
             }
         }
     }
