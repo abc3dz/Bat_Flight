@@ -47,7 +47,6 @@ fn spawn_ending_text(
     let summary = format!(
         "Thank you for playing!!\n\n\
         Play Time: {:02}:{:02}\n\
-        Coins Collected: {}\n\
         Hearts Collected: {}\n\
         Pillars Hit: {}\n\
         Gears Hit: {}\n\
@@ -55,7 +54,6 @@ fn spawn_ending_text(
         Game Over: {}",
         minutes,
         seconds,
-        score.coin,
         score.heart,
         score.pillar,
         score.gear,

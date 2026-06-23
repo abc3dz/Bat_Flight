@@ -127,6 +127,6 @@ pub fn coin_levels(
 ) -> bool {
     matches!(
         level_state.get(),
-        LevelState::Level1 | LevelState::Level2 | LevelState::Level3 | LevelState::Level4
+        LevelState::Level1 | LevelState::Level2 | LevelState::Level3 | LevelState::Level4 | LevelState::Level5
     )
 }

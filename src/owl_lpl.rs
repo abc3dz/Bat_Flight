@@ -35,9 +35,8 @@ impl Plugin for OwlMinionPlugin {
                     owl_minion_move,
                     despawn_owls,
                 )
-                //.chain()
                 .run_if(in_state(GameState::Playing))
-                .run_if(in_state(LevelState::Level4))
+                .run_if(owl_levels)
         );
     }
 }
@@ -138,4 +137,12 @@ fn check_collision(
             ));
         }
     }
+}
+pub fn owl_levels(
+    level_state: Res<State<LevelState>>,
+) -> bool {
+    matches!(
+        level_state.get(),
+        LevelState::Level4 | LevelState::Level5
+    )
 }
