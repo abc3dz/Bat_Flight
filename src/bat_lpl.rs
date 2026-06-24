@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_wind_waker_shader::prelude::*;
 
 use crate::GameState;
-use crate::score::{Score, CoinUi, HelpText, CheckPress};
+use crate::score::{Score, CoinUi};
 
 const GRAVITY:    f32 = -12.0;
 const FLAP_FORCE: f32 =  6.0;
@@ -87,8 +87,6 @@ fn bat_input(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut coin: ResMut<Score>,
     mut shake: ResMut<CoinShake>,
-    help_query: Query<Entity, With<HelpText>>,
-    mut check_press: ResMut<CheckPress>
 ) {
     let flapped = keyboard.just_pressed(KeyCode::Space)
         || mouse.just_pressed(MouseButton::Left)
@@ -108,8 +106,10 @@ fn bat_input(
         shake.timer = 0.3;
         if coin.coin <= 0{
             return;
-        }else {
+        }else if coin.coin >= 2{
             coin.coin = coin.coin.saturating_sub(2);
+        }else {
+            return;
         }
         if let Ok(bat_transform) = bat_transform.single() {
             
@@ -128,11 +128,6 @@ fn bat_input(
                 ),
             ));
         }
-        let Ok(entity) = help_query.single() else {
-            return;
-        };
-        commands.entity(entity).despawn();
-        check_press.shoot_help_seen = true;
     }
 }
 
