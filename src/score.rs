@@ -31,6 +31,9 @@ pub struct CoinUi;
 #[derive(Component)]
 pub struct ScoreText;
 
+#[derive(Component)]
+pub struct HelpText;
+
 pub struct ScorePlugin;
 
 impl Plugin for ScorePlugin {
@@ -38,7 +41,7 @@ impl Plugin for ScorePlugin {
         app
             .insert_resource(Score::default())
             .add_systems(OnEnter(GameState::Playing), setup_score_ui)
-            //.add_systems(OnExit(GameState::Playing), cleanup_score_ui)
+            .add_systems(OnEnter(GameState::Playing), setup_help_text)
             .add_systems(Update,check_level_progress.run_if(in_state(GameState::Playing)),)
             .add_systems(Update, update_score_ui.chain().run_if(in_state(GameState::Playing)));
     }
@@ -77,6 +80,26 @@ fn setup_score_ui(mut commands: Commands, score: Res<Score>, asset_server: Res<A
             ));
         });
     });
+}
+
+fn setup_help_text(
+    mut commands: Commands,
+) {
+    commands.spawn((
+        HelpText,
+        Text::new("Press S to shoot projectile"),
+        TextFont {
+            font_size: 24.0,
+            ..default()
+        },
+        TextColor(Color::WHITE),
+        Node {
+            position_type: PositionType::Absolute,
+            bottom: px(20.0),
+            left: px(20.0),
+            ..default()
+        },
+    ));
 }
 
 fn update_score_ui(
