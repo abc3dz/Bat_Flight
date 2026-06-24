@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_wind_waker_shader::prelude::*;
 
 use crate::GameState;
-use crate::score::Score;
+use crate::score::{Score, CoinUi};
 
 const GRAVITY:    f32 = -12.0;
 const FLAP_FORCE: f32 =  6.0;
@@ -21,11 +21,17 @@ pub struct BatAnimationToPlay {
     pub index: AnimationNodeIndex,
 }
 
+#[derive(Resource, Default)]
+pub struct CoinShake {
+    pub timer: f32,
+}
+
 pub struct BatPlugin;
 
 impl Plugin for BatPlugin {
     fn build(&self, app: &mut App) {
         app
+        .insert_resource(CoinShake::default())
         .add_plugins(WindWakerShaderPlugin::default())
         //.add_systems(Startup, spawn_bat)
         .add_systems(Update, (
@@ -33,6 +39,7 @@ impl Plugin for BatPlugin {
             bat_input,
             bat_physics,
             move_projectiles,
+            shake_coin_ui,
         ).run_if(in_state(GameState::Playing)))
         .add_systems(OnEnter(GameState::GameOver), cleanup_bat)
         .add_systems(OnEnter(GameState::Playing), spawn_bat);
@@ -78,7 +85,8 @@ fn bat_input(
     asset_server: Res<AssetServer>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    mut coin: ResMut<Score>
+    mut coin: ResMut<Score>,
+    mut shake: ResMut<CoinShake>,
 ) {
     let flapped = keyboard.just_pressed(KeyCode::Space)
         || mouse.just_pressed(MouseButton::Left)
@@ -95,6 +103,7 @@ fn bat_input(
     }
 
     if keyboard.just_pressed(KeyCode::KeyS) {
+        shake.timer = 0.3;
         if coin.coin <= 0{
             return;
         }else {
@@ -168,5 +177,29 @@ fn cleanup_bat(
 ) {
     for entity in &query {
         commands.entity(entity).despawn();
+    }
+}
+
+fn shake_coin_ui(
+    time: Res<Time>,
+    mut shake: ResMut<CoinShake>,
+    mut query: Query<&mut Node, With<CoinUi>>,
+) {
+    if shake.timer <= 0.0 {
+        return;
+    }
+
+    shake.timer -= time.delta_secs();
+
+    let offset = (time.elapsed_secs() * 80.0).sin() * 6.0;
+
+    for mut node in &mut query {
+        node.margin = UiRect::left(px(offset));
+    }
+
+    if shake.timer <= 0.0 {
+        for mut node in &mut query {
+            node.margin = UiRect::ZERO;
+        }
     }
 }

@@ -26,6 +26,9 @@ impl Default for Score {
 }
 
 #[derive(Component)]
+pub struct CoinUi;
+
+#[derive(Component)]
 pub struct ScoreText;
 
 pub struct ScorePlugin;
@@ -59,6 +62,7 @@ fn setup_score_ui(mut commands: Commands, score: Res<Score>, asset_server: Res<A
         )).with_children(|parent| {
 
             parent.spawn((
+                CoinUi,
                 ImageNode::new(asset_server.load("images/coin.png")),
                 Node {
                     width: px(50.0),
