@@ -25,6 +25,10 @@ impl Default for Score {
     }
 }
 
+#[derive(Resource, Default)]
+pub struct CheckPress {
+    pub shoot_help_seen: bool,
+}
 #[derive(Component)]
 pub struct CoinUi;
 
@@ -40,6 +44,7 @@ impl Plugin for ScorePlugin {
     fn build(&self, app: &mut App) {
         app
             .insert_resource(Score::default())
+            .insert_resource(CheckPress::default())
             .add_systems(OnEnter(GameState::Playing), setup_score_ui)
             .add_systems(OnEnter(GameState::Playing), setup_help_text)
             .add_systems(Update,check_level_progress.run_if(in_state(GameState::Playing)),)
@@ -84,7 +89,11 @@ fn setup_score_ui(mut commands: Commands, score: Res<Score>, asset_server: Res<A
 
 fn setup_help_text(
     mut commands: Commands,
+    check_press: Res<CheckPress>
 ) {
+    if check_press.shoot_help_seen {
+        return;
+    }
     commands.spawn((
         HelpText,
         Text::new("Press S to shoot projectile"),

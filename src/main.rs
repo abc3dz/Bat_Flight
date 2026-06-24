@@ -99,7 +99,8 @@ fn main() {
         .add_plugins(OwlBossPlugin)
         .add_systems(Startup, setup)
         .add_systems(Update, restart_input.run_if(in_state(GameState::GameOver)))
-        .add_systems(Update,(update_time_score, screen_shake,).run_if(in_state(GameState::Playing)))
+        .add_systems(Update,update_time_score.run_if(in_state(GameState::Playing)))
+        .add_systems(Update,screen_shake)
         .add_systems(OnEnter(GameState::GameOver), show_gameover)
         .add_systems(OnExit(GameState::GameOver),  hide_gameover)
         .run();
@@ -132,7 +133,11 @@ fn setup(
     ));
 }
 
-pub fn show_gameover(mut commands: Commands) {
+pub fn show_gameover(
+    mut commands: Commands,
+    mut shake: ResMut<ScreenShake>,
+) {
+    shake.timer = 0.5;
     commands.spawn((
         Text::new("Again!"),
         TextFont { font_size: 80.0, ..default() },
