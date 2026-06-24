@@ -61,12 +61,20 @@ pub struct TimeScore {
     pub seconds: f32,
 }
 
+#[derive(Component)]
+pub struct MainCamera;
+
+#[derive(Resource, Default)]
+pub struct ScreenShake {
+    pub timer: f32,
+}
+
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: "Bat Flight".into(),
-                resolution: (1280, 720).into(), 
+                resolution: (1280,720).into(), 
                 fit_canvas_to_parent: true,
                 mode: WindowMode::Windowed, 
                 ..default()
@@ -74,6 +82,7 @@ fn main() {
             ..default()
         }))
         .init_resource::<TimeScore>()
+        .init_resource::<ScreenShake>()
         .init_state::<GameState>()
         .init_state::<LevelState>()
         .init_gizmo_group::<DefaultGizmoConfigGroup>() 
@@ -90,7 +99,7 @@ fn main() {
         .add_plugins(OwlBossPlugin)
         .add_systems(Startup, setup)
         .add_systems(Update, restart_input.run_if(in_state(GameState::GameOver)))
-        .add_systems(Update,update_time_score.run_if(in_state(GameState::Playing)))
+        .add_systems(Update,(update_time_score, screen_shake,).run_if(in_state(GameState::Playing)))
         .add_systems(OnEnter(GameState::GameOver), show_gameover)
         .add_systems(OnExit(GameState::GameOver),  hide_gameover)
         .run();
@@ -105,6 +114,7 @@ fn setup(
         Camera3d::default(),
         Transform::from_xyz(0.0, 0.0, 10.0).looking_at(Vec3::ZERO, Vec3::Y),
         GlobalTransform::default(),
+        MainCamera,
     ));
     commands.spawn((
         DirectionalLight::default(),
@@ -165,4 +175,28 @@ fn update_time_score(
     mut time_score: ResMut<TimeScore>,
 ) {
     time_score.seconds += time.delta_secs();
+}
+fn screen_shake(
+    time: Res<Time>,
+    mut shake: ResMut<ScreenShake>,
+    mut camera_query: Query<&mut Transform, With<MainCamera>>,
+) {
+    if shake.timer <= 0.0 {
+        return;
+    }
+
+    shake.timer -= time.delta_secs();
+
+    let offset =
+        (time.elapsed_secs() * 80.0).sin() * 0.2;
+
+    for mut transform in &mut camera_query {
+        transform.translation.x = offset;
+    }
+
+    if shake.timer <= 0.0 {
+        for mut transform in &mut camera_query {
+            transform.translation.x = 0.0;
+        }
+    }
 }

@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_wind_waker_shader::prelude::*;
 use rand::Rng;
 
-use crate::{GameState, LevelState};
+use crate::{GameState, LevelState, ScreenShake};
 use crate::score::Score;
 use crate::bat_lpl::{Bat, BatProjectile};
 use crate::heart_lpl::HeartsUi;
@@ -106,6 +106,7 @@ fn check_collision(
     mut next: ResMut<NextState<GameState>>,
     asset_server: Res<AssetServer>,
     projectile_query: Query<(Entity, &Transform),With<BatProjectile>>,
+    mut shake: ResMut<ScreenShake>,
 ){
     let Ok(bat_t) = bat_query.single() else { return };
     for (entity, gear_transform) in &gear_query {
@@ -114,6 +115,7 @@ fn check_collision(
             .distance(gear_transform.translation);
         if distance < 1.0 {
             score.gear += 1;
+            shake.timer = 0.3;
             if score.heart <= 1 {
                 score.heart = 3;
                 next.set(GameState::GameOver);

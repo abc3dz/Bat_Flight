@@ -2,8 +2,7 @@ use bevy::prelude::*;
 use rand::Rng;
 use bevy_wind_waker_shader::prelude::*;
 use crate::bat_lpl::Bat;
-use crate::GameState;
-use crate::LevelState;
+use crate::{GameState, LevelState, ScreenShake};
 use crate::score::Score;
 
 const PILLAR_SPEED:      f32 = 4.0;
@@ -84,6 +83,7 @@ fn check_collision(
     asset_server: Res<AssetServer>,
     mut next: ResMut<NextState<GameState>>,
     mut score: ResMut<Score>,
+    mut shake: ResMut<ScreenShake>,
 ) {
     let Ok(bat_t) = bat_query.single() else { return };
     let bp = bat_t.translation;
@@ -101,6 +101,7 @@ fn check_collision(
         if dist < BIRD_RADIUS {
             score.pillar += 1;
             score.game_over += 1;
+            shake.timer = 0.5;
             commands.spawn(AudioPlayer::new(
                 asset_server.load("sounds/game_over.ogg"),
             ));
