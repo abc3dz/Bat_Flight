@@ -22,14 +22,29 @@ fn setup_menu(mut commands: Commands) {
             height: Val::Percent(100.0),
             justify_content: JustifyContent::Center,
             align_items: AlignItems::Center,
+            flex_direction: FlexDirection::Column,
             ..default()
         },
         MenuUI,
     )).with_children(|parent| {
+
         parent.spawn((
-            Text::new("Press SPACE or CLICK or TAP to Start"),
+            Text::new("BAT FLIGHT"),
             TextFont {
-                font_size: 40.0,
+                font_size: 60.0,
+                ..default()
+            },
+            TextColor(Color::srgb(1.0, 0.8, 0.2)),
+        ));
+
+        parent.spawn((
+            Text::new(
+                "Press SPACE or CLICK to Start\n\n\
+                 SPACE / CLICK = Flap\n\
+                 S = Shoot Projectile"
+            ),
+            TextFont {
+                font_size: 30.0,
                 ..default()
             },
             TextColor(Color::WHITE),
@@ -40,12 +55,10 @@ fn setup_menu(mut commands: Commands) {
 fn menu_input(
     keys: Res<ButtonInput<KeyCode>>,
     mouse:    Res<ButtonInput<MouseButton>>,
-    touches:  Res<Touches>,
     mut next_state: ResMut<NextState<GameState>>,
 ) {
     let start_game = keys.just_pressed(KeyCode::Space)
-        || mouse.just_pressed(MouseButton::Left)
-        || touches.any_just_pressed();
+        || mouse.just_pressed(MouseButton::Left);
 
     if start_game {
         next_state.set(GameState::Playing);
