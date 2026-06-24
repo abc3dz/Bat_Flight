@@ -26,12 +26,18 @@ pub struct CoinShake {
     pub timer: f32,
 }
 
+#[derive(Resource, Default)]
+pub struct HurtTimer {
+    pub timer: Option<Timer>,
+}
+
 pub struct BatPlugin;
 
 impl Plugin for BatPlugin {
     fn build(&self, app: &mut App) {
         app
         .insert_resource(CoinShake::default())
+        .insert_resource(HurtTimer::default())
         .add_plugins(WindWakerShaderPlugin::default())
         //.add_systems(Startup, spawn_bat)
         .add_systems(Update, (
@@ -40,6 +46,8 @@ impl Plugin for BatPlugin {
             bat_physics,
             move_projectiles,
             shake_coin_ui,
+            play_hurt_morph,
+            update_hurt_morph,
         ).run_if(in_state(GameState::Playing)))
         .add_systems(OnEnter(GameState::GameOver), cleanup_bat)
         .add_systems(OnEnter(GameState::Playing), spawn_bat);
@@ -147,7 +155,9 @@ fn bat_physics(
     mut next: ResMut<NextState<GameState>>,
     asset_server: Res<AssetServer>,
     mut commands: Commands,
-    mut score: ResMut<Score>
+    mut score: ResMut<Score>,
+    mut morph_query: Query<&mut MorphWeights>,
+    mut hurt: ResMut<HurtTimer>,
 ) {
     for (mut bat, mut transform) in &mut query {
         bat.velocity_y += GRAVITY * time.delta_secs();
@@ -157,6 +167,16 @@ fn bat_physics(
             commands.spawn(AudioPlayer::new(
                 asset_server.load("sounds/game_over.ogg"),
             ));
+            for mut weights in &mut morph_query {
+                weights.weights_mut()[0] = 1.0;
+            }
+
+            hurt.timer = Some(
+                Timer::from_seconds(
+                    0.2,
+                    TimerMode::Once,
+                )
+            );
             next.set(GameState::GameOver);
         }
     }
@@ -203,5 +223,42 @@ fn shake_coin_ui(
         for mut node in &mut query {
             node.margin = UiRect::ZERO;
         }
+    }
+}
+fn play_hurt_morph(
+    keyboard: Res<ButtonInput<KeyCode>>,
+    mut morph_query: Query<&mut MorphWeights>,
+) {
+    if keyboard.just_pressed(KeyCode::KeyH) {
+
+        for mut weights in &mut morph_query {
+
+            weights.weights_mut()[0] = 1.0;
+        }
+    } else{
+        for mut weights in &mut morph_query {
+
+            weights.weights_mut()[0] = 0.0;
+        }
+    }
+}
+fn update_hurt_morph(
+    time: Res<Time>,
+    mut hurt: ResMut<HurtTimer>,
+    mut morph_query: Query<&mut MorphWeights>,
+) {
+    let Some(timer) = hurt.timer.as_mut() else {
+        return;
+    };
+
+    timer.tick(time.delta());
+
+    if timer.is_finished() {
+
+        for mut weights in &mut morph_query {
+            weights.weights_mut()[0] = 0.0;
+        }
+
+        hurt.timer = None;
     }
 }
