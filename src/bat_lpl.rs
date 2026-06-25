@@ -163,6 +163,9 @@ fn bat_physics(
             commands.spawn(AudioPlayer::new(
                 asset_server.load("sounds/game_over.ogg"),
             ));
+            commands.spawn(AudioPlayer::new(
+                asset_server.load("sounds/219816__saraonsins__monkey-scream.ogg"),
+            ));
             next.set(GameState::GameOver);
         }
     }
