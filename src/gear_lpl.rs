@@ -4,7 +4,7 @@ use rand::Rng;
 
 use crate::{GameState, LevelState, ScreenShake};
 use crate::score::Score;
-use crate::bat_lpl::{Bat, BatProjectile};
+use crate::bat_lpl::{Bat, BatProjectile, HurtTimer};
 use crate::heart_lpl::HeartsUi;
 
 const GEAR_SPAWN_X: f32 = 10.0;
@@ -107,6 +107,8 @@ fn check_collision(
     asset_server: Res<AssetServer>,
     projectile_query: Query<(Entity, &Transform),With<BatProjectile>>,
     mut shake: ResMut<ScreenShake>,
+    mut morph_query: Query<&mut MorphWeights>,
+    mut hurt: ResMut<HurtTimer>,
 ){
     let Ok(bat_t) = bat_query.single() else { return };
     for (entity, gear_transform) in &gear_query {
@@ -131,6 +133,16 @@ fn check_collision(
             commands.spawn(AudioPlayer::new(
             asset_server.load("sounds/gear.ogg"),
             ));
+            for mut weights in &mut morph_query {
+                weights.weights_mut()[0] = 1.0;
+            }
+
+            hurt.timer = Some(
+                Timer::from_seconds(
+                    0.2,
+                    TimerMode::Once,
+                )
+            );
         }
         for (projectile_entity,projectile_transform) in &projectile_query{
             let distance =
