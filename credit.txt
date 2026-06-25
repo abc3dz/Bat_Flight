@@ -1,0 +1,20 @@
+## Third Party Assets
+
+This project uses code from bevy_wind_waker_shader by Jan Hohenheim.
+
+Source: https://github.com/janhohenheim/bevy_wind_waker_shader
+
+Licensed under MIT OR Apache-2.0.
+
+##Sfx from freesound
+
+hurt4.ogg by deleted_user_12367688 -- https://freesound.org/s/553285/ -- License: Creative Commons 0
+
+--------------------------------------------------
+Modified by ABC3Dz:
+- Trimmed
+- Converted to OGG
+
+Claping2_ses1.wav by freesound -- https://freesound.org/s/25294/ -- License: Creative Commons 0
+
+monkey scream.wav by saraonsins -- https://freesound.org/s/219816/ -- License: Creative Commons 0
