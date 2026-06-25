@@ -107,7 +107,7 @@ fn spawn_ending_text(
     
 
     commands.spawn(AudioPlayer::new(
-    asset_server.load("sounds/ending.ogg"),
+    asset_server.load("sounds/25294__freesound__claping2_ses1.ogg"),
     ));
 }
 

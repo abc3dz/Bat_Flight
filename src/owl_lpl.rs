@@ -151,6 +151,9 @@ fn check_collision(
                 commands.entity(heart_entity).despawn();
             }
             commands.spawn(AudioPlayer::new(
+                asset_server.load("sounds/219816__saraonsins__monkey-scream.ogg"),
+            ));
+            commands.spawn(AudioPlayer::new(
             asset_server.load("sounds/owl_atk.ogg"),
             ));
             for mut weights in &mut morph_query {

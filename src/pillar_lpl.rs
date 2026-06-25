@@ -103,6 +103,9 @@ fn check_collision(
             score.game_over += 1;
             shake.timer = 0.5;
             commands.spawn(AudioPlayer::new(
+                asset_server.load("sounds/219816__saraonsins__monkey-scream.ogg"),
+            ));
+            commands.spawn(AudioPlayer::new(
                 asset_server.load("sounds/game_over.ogg"),
             ));
             next.set(GameState::GameOver);

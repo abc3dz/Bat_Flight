@@ -85,8 +85,7 @@ fn spawn_bat(
 
 fn bat_input(
     keyboard: Res<ButtonInput<KeyCode>>,
-    mouse:    Res<ButtonInput<MouseButton>>,
-    touches:  Res<Touches>,
+    mouse: Res<ButtonInput<MouseButton>>,
     mut query: Query<&mut Bat>,
     bat_transform: Query<&Transform, With<Bat>>,
     mut commands: Commands,        
@@ -97,8 +96,7 @@ fn bat_input(
     mut shake: ResMut<CoinShake>,
 ) {
     let flapped = keyboard.just_pressed(KeyCode::Space)
-        || mouse.just_pressed(MouseButton::Left)
-        || touches.any_just_pressed();
+        || mouse.just_pressed(MouseButton::Left);
 
     if flapped {
         for mut bat in &mut query {
@@ -156,8 +154,6 @@ fn bat_physics(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
     mut score: ResMut<Score>,
-    mut morph_query: Query<&mut MorphWeights>,
-    mut hurt: ResMut<HurtTimer>,
 ) {
     for (mut bat, mut transform) in &mut query {
         bat.velocity_y += GRAVITY * time.delta_secs();
@@ -167,16 +163,6 @@ fn bat_physics(
             commands.spawn(AudioPlayer::new(
                 asset_server.load("sounds/game_over.ogg"),
             ));
-            for mut weights in &mut morph_query {
-                weights.weights_mut()[0] = 1.0;
-            }
-
-            hurt.timer = Some(
-                Timer::from_seconds(
-                    0.2,
-                    TimerMode::Once,
-                )
-            );
             next.set(GameState::GameOver);
         }
     }
@@ -234,11 +220,6 @@ fn play_hurt_morph(
         for mut weights in &mut morph_query {
 
             weights.weights_mut()[0] = 1.0;
-        }
-    } else{
-        for mut weights in &mut morph_query {
-
-            weights.weights_mut()[0] = 0.0;
         }
     }
 }

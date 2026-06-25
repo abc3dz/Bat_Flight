@@ -4,7 +4,7 @@ use bevy::audio::Volume;
 
 use crate::{GameState, LevelState};
 use crate::score::Score;
-use crate::bat_lpl::BatProjectile;
+use crate::bat_lpl::{BatProjectile, HurtTimer};
 use crate::owl_lpl::OwlSettings;
 
 #[derive(Component)]
@@ -30,22 +30,25 @@ pub struct OwlBossHp {
     pub max: u32,
 }
 
+#[derive(Component)]
+pub struct OwlBossMorph;
+
 pub struct OwlBossPlugin;
 
 impl Plugin for OwlBossPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_systems(OnEnter(LevelState::Level5),spawn_owl_boss,)
-            .add_systems(Update, debug_level5)
+            .add_systems(Update, debug_level)
             .add_systems(
                 Update,
                 (
-                    //spawn_owl_boss,
                     update_boss_hp_bar,
                     play_owl_anim,
                     owl_boss_move,
                     test_hp_owl_boss,
                     projectile_hit_boss,
+                    mark_owl_boss_morph,
                 )
                 //.chain()
                 .run_if(in_state(GameState::Playing))
@@ -190,7 +193,7 @@ fn play_owl_anim(
     }
 }
 
-fn debug_level5(
+fn debug_level(
     keys: Res<ButtonInput<KeyCode>>,
     //mut next_level_state: ResMut<NextState<LevelState>>,
     mut score: ResMut<Score>,
@@ -221,6 +224,9 @@ fn projectile_hit_boss(
     projectile_query: Query<(Entity, &Transform),With<BatProjectile>>,
     mut boss_query: Query<(Entity, &Transform, &mut OwlBossHp), With<OwlBoss>>,
     mut next_level_state: ResMut<NextState<LevelState>>,
+    mut morph_query: Query<&mut MorphWeights, With<OwlBossMorph>>,
+    mut hurt: ResMut<HurtTimer>,
+    asset_server: Res<AssetServer>,
 ) {
 
     let Ok((boss_entity, boss_transform, mut hp)) = boss_query.single_mut()
@@ -238,17 +244,47 @@ fn projectile_hit_boss(
             );
 
         if distance < 1.5 {
-
             hp.current -= 2;
-
             commands
                 .entity(projectile_entity)
                 .despawn();
-
+            for mut weights in &mut morph_query {
+                weights.weights_mut()[0] = 1.0;
+            }
+            hurt.timer = Some(
+                Timer::from_seconds(
+                    0.3,
+                    TimerMode::Once,
+                )
+            );
+            commands.spawn(AudioPlayer::new(
+                asset_server.load("sounds/553285__deleted_user_12367688__hurt4.ogg"),
+            ));
             if hp.current == 0 {
                 commands.entity(boss_entity).despawn();
                 next_level_state.set(LevelState::LevelEnd);
             }
+        }
+    }
+}
+fn mark_owl_boss_morph(
+    mut commands: Commands,
+    morph_query: Query<Entity, Added<MorphWeights>>,
+    parents: Query<&ChildOf>,
+    owl_roots: Query<Entity, With<OwlBoss>>,
+) {
+    for entity in &morph_query {
+        let mut current = entity;
+
+        while let Ok(parent) = parents.get(current) {
+            let parent_entity = parent.parent();
+
+            if owl_roots.get(parent_entity).is_ok() {
+                commands.entity(entity).insert(OwlBossMorph);
+                break;
+            }
+
+            current = parent_entity;
         }
     }
 }

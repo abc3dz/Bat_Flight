@@ -60,9 +60,6 @@ fn spawn_heart(
     if !timer.0.just_finished() {
         return;
     }
-    if score.heart>=6 {
-        return;
-    }
 
     let mut rng = rand::rng();
 

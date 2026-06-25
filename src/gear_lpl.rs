@@ -133,6 +133,9 @@ fn check_collision(
             commands.spawn(AudioPlayer::new(
             asset_server.load("sounds/gear.ogg"),
             ));
+            commands.spawn(AudioPlayer::new(
+                asset_server.load("sounds/219816__saraonsins__monkey-scream.ogg"),
+            ));
             for mut weights in &mut morph_query {
                 weights.weights_mut()[0] = 1.0;
             }
